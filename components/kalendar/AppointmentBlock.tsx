@@ -4,6 +4,7 @@ import { parseISO, format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/lib/db/appointments";
+import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
 
 const DEFAULT_COLOR = "#c9a24b";
 
@@ -14,6 +15,7 @@ export function AppointmentBlock({
   appointment: AppointmentWithRelations;
   style?: React.CSSProperties;
 }) {
+  const openDetail = useAppointmentModalStore((s) => s.openDetail);
   const color = appointment.doctor?.color_hex ?? DEFAULT_COLOR;
   const isPending = appointment.status === "pending";
 
@@ -26,7 +28,10 @@ export function AppointmentBlock({
   return (
     <button
       type="button"
-      onClick={() => console.log(appointment)}
+      onClick={(e) => {
+        e.stopPropagation();
+        openDetail(appointment);
+      }}
       style={{
         ...style,
         // dashed leva ivica + niža opacity razlikuju 'pending' od 'confirmed'

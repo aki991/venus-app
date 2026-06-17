@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { Search, Settings, Plus, Sun, Moon, LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
 import { logoutAction } from "@/lib/auth/actions";
 import type { UserWithProfile } from "@/lib/auth/get-user";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -70,6 +71,7 @@ function ThemeToggle() {
 }
 
 export function TopBar({ user }: { user: UserWithProfile }) {
+  const openNew = useAppointmentModalStore((s) => s.openNew);
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(" ") ||
     (user.email ?? "Korisnik");
@@ -143,7 +145,7 @@ export function TopBar({ user }: { user: UserWithProfile }) {
       {/* Novi termin CTA (samo UI za sad) */}
       <button
         type="button"
-        onClick={() => console.log("Novi termin")}
+        onClick={() => openNew()}
         className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#1a140a]"
         style={{
           backgroundImage:
