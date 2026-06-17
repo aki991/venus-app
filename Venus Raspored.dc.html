@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#0b0b0d;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+[data-theme="dark"]{--bg:#0b0b0d;--surface:#141417;--surface-2:#1a1a1e;--block-base:#202026;--line:rgba(255,255,255,0.055);--line-strong:rgba(255,255,255,0.10);--text:#f3efe7;--text-dim:#a39c8f;--text-faint:#6f6a60;--gold:#c9a24b;--gold-bright:#e3c578;--gold-dim:#8c7333;--border:rgba(255,255,255,0.09);--header-bg:rgba(16,16,19,0.82);--tooth:#e9e3d4;--tooth-line:#a99d84;--tooth-shade:#d4cab2;--danger:#d65a4e;}
+[data-theme="light"]{--bg:#edeae2;--surface:#ffffff;--surface-2:#f6f4ec;--block-base:#ffffff;--line:rgba(28,24,16,0.07);--line-strong:rgba(28,24,16,0.13);--text:#1d1a15;--text-dim:#6c6557;--text-faint:#a59d8e;--gold:#977020;--gold-bright:#b78f33;--gold-dim:#bda36b;--border:rgba(28,24,16,0.12);--header-bg:rgba(255,255,255,0.84);--tooth:#fbfaf6;--tooth-line:#cabfa8;--tooth-shade:#ece4d3;--danger:#c0392b;}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes backIn{from{opacity:0;}to{opacity:1;}}
+@keyframes waPulse{0%{box-shadow:0 6px 22px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,.45);}70%{box-shadow:0 6px 22px rgba(37,211,102,.45),0 0 0 16px rgba(37,211,102,0);}100%{box-shadow:0 6px 22px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,0);}}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-faint);background-clip:padding-box;}
+::-webkit-scrollbar-track{background:transparent;}
+input::placeholder,textarea::placeholder{color:var(--text-faint);}
+</style>
+</helmet>
+
+<div data-theme="{{theme}}" style="height:100vh;width:100vw;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;display:flex;flex-direction:column;">
+
+  <!-- ============ HEADER ============ -->
+  <header style="height:66px;flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:0 22px;background:var(--header-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);position:relative;z-index:40;">
+    <div style="display:flex;align-items:center;gap:13px;flex:0 0 auto;">
+      <svg width="29" height="35" viewBox="0 0 60 70" fill="none" stroke="var(--gold)" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 7px color-mix(in srgb,var(--gold) 35%,transparent));">
+        <path d="M30 5C18 5 11 12 11 24c0 9 2 16 5 26 1.6 5 3 12 6 12 3 0 3.5-8 5-15 .6-3 5.4-3 6 0 1.5 7 2 15 5 15 3 0 4.4-7 6-12 3-10 5-17 5-26C54 12 47 5 35 5"></path>
+        <path d="M30 5 18 22M30 5l12 17M18 22l12 7 12-7M30 5v24M11 24l7-2M49 24l-7-2M18 22l2 28M42 22l-2 28M30 29l-1 16M30 29l1 16"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:4px;line-height:1;">
+        <span style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:21px;letter-spacing:0.46em;color:var(--text);padding-left:0.46em;">VENUS</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:7.5px;font-weight:600;letter-spacing:0.32em;color:var(--gold);text-transform:uppercase;">stomatološka ordinacija</span>
+          <span style="width:12px;height:5px;background:var(--gold);transform:skewX(-22deg);display:block;opacity:.9;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:9px;height:38px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:296px;flex:0 0 auto;margin-left:8px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+      <input placeholder="Pretraži pacijente, termine…" style="border:none;background:none;outline:none;color:var(--text);font-family:'Manrope';font-size:13px;width:100%;"/>
+    </div>
+
+    <div style="flex:1;"></div>
+
+    <button onClick="{{toggleTheme}}" title="Promeni temu" style="display:flex;align-items:center;gap:2px;height:38px;padding:3px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;cursor:pointer;">
+      <span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{sunBg}};color:{{sunFg}};transition:background .2s;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"></path></svg>
+      </span>
+      <span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{moonBg}};color:{{moonFg}};transition:background .2s;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A8 8 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"></path></svg>
+      </span>
+    </button>
+
+    <button title="Podešavanja" style="width:38px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);border-color:var(--gold-dim);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h7M15 18h5"></path><circle cx="16" cy="6" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="13" cy="18" r="2"></circle></svg>
+    </button>
+
+    <span style="width:1px;height:26px;background:var(--border);"></span>
+
+    <div style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--gold);flex:0 0 auto;">DV</div>
+
+    <button onClick="{{openNew}}" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 18px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a140a;border:none;border-radius:10px;font-family:'Manrope';font-weight:700;font-size:13.5px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--gold) 42%,transparent);transition:transform .14s,filter .14s;flex:0 0 auto;" style-hover="filter:brightness(1.07);transform:translateY(-1px);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+      Novi termin
+    </button>
+  </header>
+
+  <!-- ============ BODY ============ -->
+  <div style="flex:1;display:flex;min-height:0;">
+
+    <!-- ===== NAV SIDEBAR ===== -->
+    <aside style="width:{{sidebarW}}px;flex:0 0 auto;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border);overflow:hidden;transition:width .22s ease;">
+      <nav style="display:flex;flex-direction:column;gap:4px;padding:16px 12px;flex:0 0 auto;">
+        <button onClick="{{nv.kalendar.onClick}}" title="Kalendar zakazivanja" style="display:flex;align-items:center;gap:12px;width:100%;height:42px;padding:0 12px;justify-content:{{navJustify}};background:{{nv.kalendar.bg}};border:none;border-radius:10px;cursor:pointer;position:relative;transition:background .15s;" style-hover="background:var(--surface-2);">
+          <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 2px 2px 0;background:var(--gold);opacity:{{nv.kalendar.bar}};"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{nv.kalendar.fg}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>
+          <span style="display:{{labelDisplay}};font-size:13.5px;font-weight:600;color:{{nv.kalendar.fg}};white-space:nowrap;">Kalendar zakazivanja</span>
+        </button>
+        <button onClick="{{nv.dnevnik.onClick}}" title="Dnevnik pacijenata" style="display:flex;align-items:center;gap:12px;width:100%;height:42px;padding:0 12px;justify-content:{{navJustify}};background:{{nv.dnevnik.bg}};border:none;border-radius:10px;cursor:pointer;position:relative;transition:background .15s;" style-hover="background:var(--surface-2);">
+          <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 2px 2px 0;background:var(--gold);opacity:{{nv.dnevnik.bar}};"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{nv.dnevnik.fg}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><rect x="5" y="3.5" width="14" height="17" rx="2"></rect><path d="M9 3.5h6v3H9zM8.5 11h7M8.5 15h4"></path></svg>
+          <span style="display:{{labelDisplay}};font-size:13.5px;font-weight:600;color:{{nv.dnevnik.fg}};white-space:nowrap;">Dnevnik pacijenata</span>
+        </button>
+        <button onClick="{{nv.racuni.onClick}}" title="Računi pacijenata" style="display:flex;align-items:center;gap:12px;width:100%;height:42px;padding:0 12px;justify-content:{{navJustify}};background:{{nv.racuni.bg}};border:none;border-radius:10px;cursor:pointer;position:relative;transition:background .15s;" style-hover="background:var(--surface-2);">
+          <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 2px 2px 0;background:var(--gold);opacity:{{nv.racuni.bar}};"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{nv.racuni.fg}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><path d="M6 3h12v18l-2.2-1.4-2.3 1.4-2.2-1.4-2.3 1.4L6 21z"></path><path d="M9 8h6M9 12h6"></path></svg>
+          <span style="display:{{labelDisplay}};font-size:13.5px;font-weight:600;color:{{nv.racuni.fg}};white-space:nowrap;">Računi pacijenata</span>
+        </button>
+        <button onClick="{{nv.usluge.onClick}}" title="Usluge" style="display:flex;align-items:center;gap:12px;width:100%;height:42px;padding:0 12px;justify-content:{{navJustify}};background:{{nv.usluge.bg}};border:none;border-radius:10px;cursor:pointer;position:relative;transition:background .15s;" style-hover="background:var(--surface-2);">
+          <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 2px 2px 0;background:var(--gold);opacity:{{nv.usluge.bar}};"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{nv.usluge.fg}}" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" style="flex:0 0 auto;"><path d="M12 3.5c-3 0-4.2 1.4-4.2 4 0 2 .5 3.6 1.1 6 .4 1.6.5 4 1.6 4 1 0 1-2 1.3-3.6.1-.7.7-.7.9 0 .3 1.6.3 3.6 1.3 3.6 1.1 0 1.2-2.4 1.6-4 .6-2.4 1.1-4 1.1-6 0-2.6-1.2-4-4.2-4-.7 0-1.1.3-1.7.3s-1-.3-1.8-.3z"></path></svg>
+          <span style="display:{{labelDisplay}};font-size:13.5px;font-weight:600;color:{{nv.usluge.fg}};white-space:nowrap;">Usluge</span>
+        </button>
+      </nav>
+
+      <div style="height:1px;background:var(--border);margin:2px 16px;"></div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:2px;">
+        <span style="display:{{sectionDisplay}};font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--text-faint);text-transform:uppercase;margin:0 4px 9px;">Tim ordinacije</span>
+        <sc-for list="{{doctors}}" as="doc" hint-placeholder-count="4">
+          <div onClick="{{doc.toggle}}" title="{{doc.name}}" style="display:flex;align-items:center;gap:11px;padding:8px;border-radius:9px;cursor:pointer;justify-content:{{navJustify}};transition:background .15s;" style-hover="background:var(--surface-2);">
+            <span style="width:9px;height:9px;border-radius:50%;background:{{doc.color}};opacity:{{doc.dotOp}};box-shadow:0 0 7px {{doc.color}};flex:0 0 auto;transition:opacity .2s;"></span>
+            <span style="display:{{labelDisplay}};flex:1;font-size:12.5px;font-weight:500;color:{{doc.nameColor}};white-space:nowrap;transition:color .2s;">{{doc.name}}</span>
+            <span style="display:{{labelDisplay}};font-size:11px;font-weight:600;color:var(--text-faint);font-variant-numeric:tabular-nums;background:var(--surface-2);padding:1px 7px;border-radius:10px;">{{doc.count}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main style="flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);">
+
+      <sc-if value="{{isKalendar}}" hint-placeholder-val="{{true}}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+
+          <div style="flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding:14px 22px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:16px;flex:0 1 auto;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button title="Prethodna sedmica" style="width:38px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);flex:0 0 auto;" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+                <div style="position:relative;">
+                  <button onClick="{{toggleMonth}}" style="display:flex;align-items:center;gap:11px;height:44px;padding:0 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:13px;cursor:pointer;transition:border-color .15s;" style-hover="border-color:var(--gold-dim);">
+                    <span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;letter-spacing:0.01em;color:var(--text);white-space:nowrap;">{{weekRangeLabel}}</span>
+                    <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--text-dim);transform:rotate({{monthChevron}});transition:transform .2s;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                    </span>
+                  </button>
+
+              <sc-if value="{{monthOpen}}" hint-placeholder-val="{{false}}">
+                <div onClick="{{closeMonth}}" style="position:fixed;inset:0;z-index:48;"></div>
+                <div onClick="{{stop}}" style="position:absolute;top:calc(100% + 10px);left:0;z-index:49;width:296px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,0.42);padding:16px;animation:modalIn .18s ease;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;letter-spacing:0.04em;color:var(--text);">{{monthLabel}}</span>
+                    <div style="display:flex;gap:4px;">
+                      <button style="width:26px;height:26px;border-radius:7px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+                      <button style="width:26px;height:26px;border-radius:7px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></button>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:5px;">
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">P</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">U</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">S</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">Č</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">P</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">S</span>
+                    <span style="text-align:center;font-size:9.5px;font-weight:700;letter-spacing:0.06em;color:var(--text-faint);">N</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <sc-for list="{{monthWeeks}}" as="row" hint-placeholder-count="5">
+                      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">
+                        <sc-for list="{{row.days}}" as="c" hint-placeholder-count="7">
+                          <div onClick="{{closeMonth}}" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:{{c.weight}};color:{{c.fg}};background:{{c.bg}};border-radius:7px;cursor:pointer;font-variant-numeric:tabular-nums;transition:background .15s;" style-hover="background:var(--surface-2);">{{c.d}}</div>
+                        </sc-for>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+                </div>
+                <button title="Sledeća sedmica" style="width:38px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);flex:0 0 auto;" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></button>
+              </div>
+              <span style="font-size:18px;font-weight:600;color:var(--text-dim);white-space:nowrap;">{{apptTotal}} termina ove sedmice</span>
+            </div>
+
+            <div style="flex:1;"></div>
+            <div style="display:flex;gap:3px;padding:3px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;">
+              <sc-for list="{{segs}}" as="seg" hint-placeholder-count="3">
+                <button onClick="{{seg.onClick}}" style="height:32px;padding:0 14px;border:none;border-radius:8px;font-family:'Manrope';font-size:12.5px;font-weight:600;cursor:pointer;background:{{seg.bg}};color:{{seg.fg}};transition:all .18s;">{{seg.label}}</button>
+              </sc-for>
+            </div>
+            <button style="height:38px;padding:0 17px;background:color-mix(in srgb,var(--gold) 14%,var(--surface-2));border:1px solid var(--gold-dim);border-radius:10px;color:var(--gold);font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;" style-hover="background:color-mix(in srgb,var(--gold) 22%,var(--surface-2));">danas</button>
+          </div>
+
+          <div style="flex:1;overflow:auto;position:relative;">
+            <div style="display:grid;grid-template-columns:62px repeat(7,1fr);position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line-strong);">
+              <div style="border-right:1px solid var(--line);"></div>
+              <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:11px 0;border-right:1px solid var(--line);">
+                  <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:{{d.dowColor}};">{{d.dow}}</span>
+                  <span style="display:flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 9px;border-radius:15px;font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;background:{{d.pillBg}};color:{{d.pillFg}};">{{d.date}}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:grid;grid-template-columns:62px repeat(7,1fr);height:{{gridHeight}}px;">
+              <div style="position:relative;border-right:1px solid var(--line);">
+                <sc-for list="{{timeMarks}}" as="t" hint-placeholder-count="12">
+                  <span style="position:absolute;top:{{t.top}}px;right:9px;font-size:{{t.size}};font-weight:600;color:var(--text-faint);opacity:{{t.op}};font-variant-numeric:tabular-nums;letter-spacing:0.02em;line-height:1;">{{t.label}}</span>
+                </sc-for>
+              </div>
+              <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+                <div style="position:relative;border-right:1px solid var(--line);background-color:{{d.colBg}};background-image:repeating-linear-gradient(to bottom,var(--line) 0,var(--line) 1px,transparent 1px,transparent 54px),repeating-linear-gradient(to bottom,var(--line-strong) 0,var(--line-strong) 1px,transparent 1px,transparent 108px);">
+                  <sc-if value="{{d.closed}}" hint-placeholder-val="{{false}}">
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,transparent 0 11px,var(--line) 11px 12px);">
+                      <span style="font-size:11px;font-weight:700;letter-spacing:0.18em;color:var(--text-faint);text-transform:uppercase;">Ne radi</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{d.now}}" hint-placeholder-val="{{false}}">
+                    <div style="position:absolute;left:0;right:0;top:{{d.nowTop}}px;border-top:2px solid var(--gold);z-index:5;box-shadow:0 0 10px color-mix(in srgb,var(--gold) 70%,transparent);">
+                      <span style="position:absolute;left:-4px;top:-5px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 9px var(--gold);"></span>
+                    </div>
+                  </sc-if>
+                  <sc-for list="{{d.blocks}}" as="b" hint-placeholder-count="5">
+                    <div onClick="{{b.open}}" style="position:absolute;top:{{b.top}}px;left:calc({{b.left}}% + 3px);width:calc({{b.width}}% - 6px);height:{{b.height}}px;--doc:{{b.color}};display:flex;flex-direction:column;background:color-mix(in srgb,var(--doc) 13%,var(--block-base));border:1px solid color-mix(in srgb,var(--doc) 28%,transparent);border-left:3px solid var(--doc);border-radius:7px;padding:5px 7px;overflow:hidden;cursor:pointer;opacity:{{b.dim}};box-shadow:0 1px 3px rgba(0,0,0,0.14);transition:transform .14s ease,box-shadow .14s ease,opacity .25s ease;" style-hover="box-shadow:0 0 0 1px var(--doc),0 10px 26px rgba(0,0,0,0.32),0 0 20px color-mix(in srgb,var(--doc) 50%,transparent);transform:translateY(-2px);z-index:4;">
+                      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:5px;">
+                        <span style="font-weight:700;font-size:12px;color:var(--text);line-height:1.16;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">{{b.name}}</span>
+                        <span style="font-size:8px;font-weight:800;letter-spacing:0.03em;color:var(--doc);background:color-mix(in srgb,var(--doc) 20%,transparent);padding:2px 4px;border-radius:4px;flex:0 0 auto;line-height:1;">{{b.initials}}</span>
+                      </div>
+                      <div style="font-size:10.5px;color:var(--text-dim);line-height:1.22;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{b.proc}}</div>
+                      <div style="font-size:9.5px;font-weight:600;color:var(--text-faint);margin-top:auto;font-variant-numeric:tabular-nums;">{{b.time}}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isDnevnik}}" hint-placeholder-val="{{false}}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+
+          <!-- ===== PATIENT LIST ===== -->
+          <sc-if value="{{listView}}" hint-placeholder-val="{{false}}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+              <div style="flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:18px 24px;border-bottom:1px solid var(--border);">
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:28px;color:var(--text);">Dnevnik pacijenata</h1>
+                  <span style="font-size:13px;color:var(--text-dim);">Kartoni i istorija svih pacijenata ordinacije</span>
+                </div>
+                <div style="flex:1;"></div>
+                <div style="display:flex;align-items:center;gap:9px;height:40px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:260px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+                  <input placeholder="Pretraži pacijente…" style="border:none;background:none;outline:none;color:var(--text);font-family:'Manrope';font-size:13px;width:100%;"/>
+                </div>
+                <button style="display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a140a;border:none;border-radius:10px;font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--gold) 40%,transparent);" style-hover="filter:brightness(1.06);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Novi pacijent</button>
+              </div>
+              <div style="flex:1;overflow:auto;padding:10px 16px 28px;">
+                <div style="min-width:900px;">
+                  <div style="display:grid;grid-template-columns:minmax(210px,2.2fr) 80px 96px 1.1fr 1.3fr 1.5fr 128px 30px;gap:12px;padding:8px 14px 12px;border-bottom:1px solid var(--border);">
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Pacijent</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Karton</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Starost</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Lokacija</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Poslednja poseta</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Lekar</span>
+                    <span style="font-size:10.5px;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;">Status</span>
+                    <span></span>
+                  </div>
+                  <sc-for list="{{patientRows}}" as="p" hint-placeholder-count="8">
+                    <div onClick="{{p.open}}" style="display:grid;grid-template-columns:minmax(210px,2.2fr) 80px 96px 1.1fr 1.3fr 1.5fr 128px 30px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:9px;transition:background .14s;" style-hover="background:var(--surface-2);">
+                      <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                        <span style="width:40px;height:40px;border-radius:50%;border:1.5px solid {{p.tone}};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:{{p.tone}};flex:0 0 auto;">{{p.ini}}</span>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+                          <span style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{p.name}}</span>
+                          <span style="font-size:11.5px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{p.occ}}</span>
+                        </div>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:var(--text-dim);font-variant-numeric:tabular-nums;">{{p.no}}</span>
+                      <span style="font-size:13px;color:var(--text-dim);">{{p.age}} god.</span>
+                      <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{p.loc}}</span>
+                      <span style="font-size:13px;color:var(--text-dim);font-variant-numeric:tabular-nums;">{{p.last}}</span>
+                      <span style="font-size:12.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{p.dr}}</span>
+                      <div style="display:flex;align-items:center;gap:7px;">
+                        <span style="display:inline-flex;padding:4px 10px;border-radius:20px;background:{{p.statusBg}};font-size:11px;font-weight:700;color:{{p.statusFg}};white-space:nowrap;">{{p.status}}</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="opacity:{{p.warnOp}};flex:0 0 auto;"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ===== PATIENT DETAIL ===== -->
+          <sc-if value="{{detailView}}" hint-placeholder-val="{{false}}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+              <div style="flex:0 0 auto;border-bottom:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:14px;padding:14px 24px 0;">
+                  <button onClick="{{backToList}}" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 13px 0 9px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;cursor:pointer;color:var(--text-dim);font-family:'Manrope';font-size:12.5px;font-weight:600;" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg>Svi pacijenti</button>
+                  <span style="width:32px;height:32px;border-radius:50%;border:1.5px solid {{detail.tone}};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{detail.tone}};">{{detail.ini}}</span>
+                  <div style="display:flex;flex-direction:column;gap:1px;">
+                    <span style="font-size:15px;font-weight:700;color:var(--text);">{{detail.name}}</span>
+                    <span style="font-size:11.5px;color:var(--text-faint);">Karton br. {{detail.no}} · {{detail.occ}}</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:24px;padding:12px 24px 0;overflow-x:auto;">
+                  <sc-for list="{{ptabs}}" as="tab" hint-placeholder-count="4">
+                    <button onClick="{{tab.onClick}}" style="position:relative;background:none;border:none;cursor:pointer;padding:6px 2px 14px;font-family:'Manrope';font-size:13.5px;font-weight:600;color:{{tab.fg}};white-space:nowrap;transition:color .15s;">{{tab.label}}<span style="position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--gold);opacity:{{tab.bar}};"></span></button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="flex:1;overflow:auto;padding:22px 24px 32px;">
+
+                <!-- KARTON -->
+                <sc-if value="{{tabKarton}}" hint-placeholder-val="{{true}}">
+                  <div style="display:flex;flex-direction:column;gap:18px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:23px;color:var(--text);">Profil pacijenta</h2>
+                      <div style="display:flex;align-items:center;gap:18px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <span style="font-size:13px;color:var(--text-dim);font-weight:600;">Mlečni zubi</span>
+                          <button onClick="{{toggleMilk}}" style="width:44px;height:24px;border-radius:12px;background:{{milkTrackBg}};border:none;cursor:pointer;position:relative;transition:background .2s;flex:0 0 auto;"><span style="position:absolute;top:2px;left:{{milkKnobX}};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.35);"></span></button>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                          <button onClick="{{zoomOut}}" style="width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                          <button onClick="{{zoomIn}}" style="width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
+                      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:15px;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                          <div style="display:flex;flex-direction:column;gap:3px;">
+                            <span style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);line-height:1.1;">{{detail.name}}</span>
+                            <span style="font-size:13px;color:var(--text-dim);">{{detail.occ}}</span>
+                          </div>
+                          <span style="width:56px;height:56px;border-radius:50%;border:2px solid {{detail.tone}};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:{{detail.tone}};flex:0 0 auto;">{{detail.ini}}</span>
+                        </div>
+                        <div style="display:flex;align-items:stretch;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+                          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:11px 4px;">
+                            <span style="font-size:19px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;">{{detail.no}}</span>
+                            <span style="font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;">Karton</span>
+                          </div>
+                          <span style="width:1px;background:var(--border);"></span>
+                          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:11px 4px;">
+                            <span style="font-size:19px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;">{{detail.age}}</span>
+                            <span style="font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;">Starost</span>
+                          </div>
+                          <span style="width:1px;background:var(--border);"></span>
+                          <div style="display:flex;align-items:center;justify-content:center;padding:0 14px;">
+                            <span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;font-style:italic;">i</span>
+                          </div>
+                        </div>
+                        <div style="height:1px;background:var(--line);"></div>
+                        <div style="display:flex;flex-direction:column;gap:11px;">
+                          <div style="display:flex;align-items:center;gap:11px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+                            <span style="font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{detail.mail}}</span>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:11px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"></path></svg>
+                            <span style="font-size:12.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;">{{detail.tel}}</span>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:11px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                            <span style="font-size:12.5px;color:var(--text-dim);">{{detail.loc}}</span>
+                          </div>
+                          <sc-for list="{{condList}}" as="cd" hint-placeholder-count="0">
+                            <div style="display:flex;align-items:center;gap:11px;">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16v.5"></path></svg>
+                              <span style="font-size:12.5px;color:var(--danger);font-weight:600;">{{cd.t}}</span>
+                            </div>
+                          </sc-for>
+                          <sc-if value="{{hasWarn}}" hint-placeholder-val="{{false}}">
+                            <div style="display:flex;align-items:flex-start;gap:11px;">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;margin-top:1px;"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>
+                              <span style="font-size:12.5px;color:var(--danger);font-weight:600;line-height:1.4;">{{detail.warn}}</span>
+                            </div>
+                          </sc-if>
+                        </div>
+                        <button style="align-self:flex-end;display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;color:var(--gold);font-family:'Manrope';font-size:12px;font-weight:600;" style-hover="filter:brightness(1.15);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Izmeni</button>
+                      </div>
+
+                      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;">
+                        <dc-import name="Odontogram" cols="{{chartCols}}" bridges-up="{{bridgesUp}}" bridges-lo="{{bridgesLo}}" tooth-w="30" tooth-h="50" min-w="600" zoom="{{zoom}}" hint-size="100%,190px"></dc-import>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);">
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:3px;background:var(--danger);"></span>Karijes</span>
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:3px;background:#3a3a3e;"></span>Ispun / plomba</span>
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:3px;background:var(--gold);"></span>Kanal korena</span>
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:3px;background:#3b6fb0;"></span>Keramika</span>
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:3px;background:#cf8a2e;"></span>Endodoncija</span>
+                          <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);"><span style="width:14px;height:3px;border-radius:2px;background:var(--gold);"></span>Most</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 290px;gap:18px;align-items:start;">
+                      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;min-width:0;">
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px;">
+                          <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:19px;color:var(--text);">Protokol pacijenta · Dg/Th</h3>
+                          <div style="flex:1;"></div>
+                          <div style="display:flex;align-items:center;gap:9px;">
+                            <span style="font-size:12px;color:var(--text-dim);font-weight:600;">Sakrij status</span>
+                            <button onClick="{{toggleHideStatus}}" style="width:44px;height:24px;border-radius:12px;background:{{hideTrackBg}};border:none;cursor:pointer;position:relative;transition:background .2s;"><span style="position:absolute;top:2px;left:{{hideKnobX}};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.35);"></span></button>
+                          </div>
+                          <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 13px;background:color-mix(in srgb,var(--gold) 14%,var(--surface-2));border:1px solid var(--gold-dim);border-radius:9px;color:var(--gold);font-family:'Manrope';font-weight:700;font-size:12.5px;cursor:pointer;" style-hover="background:color-mix(in srgb,var(--gold) 22%,var(--surface-2));"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj unos</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                          <div style="min-width:640px;">
+                            <div style="display:grid;grid-template-columns:96px 86px 86px minmax(150px,1.3fr) minmax(150px,1.5fr) 1fr 48px;gap:10px;padding:0 10px 10px;border-bottom:1px solid var(--border);">
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Datum</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Tip</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Zub</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Deo zuba</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Dg/Th · beleška</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Dr.</span>
+                              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Uredi</span>
+                            </div>
+                            <sc-for list="{{protoRows}}" as="r" hint-placeholder-count="6">
+                              <div style="display:grid;grid-template-columns:96px 86px 86px minmax(150px,1.3fr) minmax(150px,1.5fr) 1fr 48px;gap:10px;align-items:center;padding:11px 10px;border-bottom:1px solid var(--line);">
+                                <span style="font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums;">{{r.date}}</span>
+                                <span style="justify-self:start;padding:3px 9px;border-radius:14px;background:{{r.tipBg}};font-size:11px;font-weight:700;color:{{r.tipFg}};">{{r.tip}}</span>
+                                <span style="font-size:12.5px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;">{{r.zub}}</span>
+                                <span style="font-size:12.5px;color:var(--text-dim);">{{r.deo}}</span>
+                                <span style="font-size:12.5px;color:var(--text);">{{r.dgth}}</span>
+                                <span style="font-size:12px;color:var(--text-dim);">{{r.dr}}</span>
+                                <button style="justify-self:center;width:28px;height:28px;border-radius:7px;background:none;border:none;cursor:pointer;color:var(--text-faint);display:flex;align-items:center;justify-content:center;" style-hover="color:var(--gold);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+                              </div>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px;">
+                        <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:19px;color:var(--text);">Snimci / slike</h3>
+                        <sc-for list="{{imgs}}" as="img" hint-placeholder-count="4">
+                          <div style="position:relative;border-radius:11px;overflow:hidden;border:1px solid var(--border);background:#0d0c0b;aspect-ratio:16/9;">
+                            <div style="position:absolute;inset:0;background:radial-gradient(125% 100% at 50% 35%, rgba(150,148,134,0.4), rgba(16,15,13,0.96));"></div>
+                            <svg viewBox="0 0 120 40" preserveAspectRatio="none" style="position:absolute;left:0;right:0;bottom:14px;width:100%;height:42%;opacity:0.32;" fill="none" stroke="#e9e3d4" stroke-width="1"><path d="M6 38 Q10 14 16 38 M18 38 Q22 12 28 38 M30 38 Q35 10 41 38 M44 38 Q50 9 56 38 M60 38 Q66 9 72 38 M76 38 Q81 10 86 38 M89 38 Q94 12 99 38 M102 38 Q107 14 113 38"></path></svg>
+                            <div style="position:absolute;left:0;right:0;bottom:0;padding:8px 11px;background:linear-gradient(transparent,rgba(0,0,0,0.65));display:flex;justify-content:space-between;align-items:center;">
+                              <span style="font-size:11.5px;font-weight:600;color:#f3efe7;">{{img.label}}</span>
+                              <span style="font-size:10px;color:#bdb6a8;font-variant-numeric:tabular-nums;">{{img.sub}}</span>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- GRAFIČKI PRIKAZ ZUBA -->
+                <sc-if value="{{tabZubi}}" hint-placeholder-val="{{false}}">
+                  <div style="display:flex;flex-direction:column;gap:18px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:23px;color:var(--text);">Grafički prikaz zuba</h2>
+                      <div style="display:flex;align-items:center;gap:18px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <span style="font-size:13px;color:var(--text-dim);font-weight:600;">Mlečni zubi</span>
+                          <button onClick="{{toggleMilk}}" style="width:44px;height:24px;border-radius:12px;background:{{milkTrackBg}};border:none;cursor:pointer;position:relative;transition:background .2s;flex:0 0 auto;"><span style="position:absolute;top:2px;left:{{milkKnobX}};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.35);"></span></button>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                          <button onClick="{{zoomOut}}" style="width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                          <button onClick="{{zoomIn}}" style="width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--gold);border-color:var(--gold-dim);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 24px;">
+                      <dc-import name="Odontogram" cols="{{chartCols}}" bridges-up="{{bridgesUp}}" bridges-lo="{{bridgesLo}}" tooth-w="44" tooth-h="72" min-w="780" zoom="{{zoom}}" hint-size="100%,320px"></dc-import>
+                      <div style="display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:26px;padding-top:18px;border-top:1px solid var(--line);justify-content:center;">
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:11px;height:11px;border-radius:3px;background:var(--danger);"></span>Karijes</span>
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:11px;height:11px;border-radius:3px;background:#3a3a3e;"></span>Ispun / plomba</span>
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:11px;height:11px;border-radius:3px;background:var(--gold);"></span>Kanal korena</span>
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:11px;height:11px;border-radius:3px;background:#3b6fb0;"></span>Keramika</span>
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:11px;height:11px;border-radius:3px;background:#cf8a2e;"></span>Endodoncija</span>
+                        <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);"><span style="width:16px;height:3px;border-radius:2px;background:var(--gold);"></span>Most</span>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- PROTOKOL -->
+                <sc-if value="{{tabProtokol}}" hint-placeholder-val="{{false}}">
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px;">
+                      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:22px;color:var(--text);">Protokol pacijenta · Dg/Th</h2>
+                      <span style="font-size:12.5px;color:var(--text-faint);">{{protoCount}} zapisa</span>
+                      <div style="flex:1;"></div>
+                      <div style="display:flex;align-items:center;gap:9px;">
+                        <span style="font-size:12px;color:var(--text-dim);font-weight:600;">Sakrij status</span>
+                        <button onClick="{{toggleHideStatus}}" style="width:44px;height:24px;border-radius:12px;background:{{hideTrackBg}};border:none;cursor:pointer;position:relative;transition:background .2s;"><span style="position:absolute;top:2px;left:{{hideKnobX}};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.35);"></span></button>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:9px;height:36px;padding:0 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;width:220px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+                        <input placeholder="Pretraži zapise…" style="border:none;background:none;outline:none;color:var(--text);font-family:'Manrope';font-size:12.5px;width:100%;"/>
+                      </div>
+                      <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:none;border-radius:9px;color:#1a140a;font-family:'Manrope';font-weight:700;font-size:12.5px;cursor:pointer;" style-hover="filter:brightness(1.06);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj novi unos</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                      <div style="min-width:760px;">
+                        <div style="display:grid;grid-template-columns:110px 96px 100px minmax(170px,1.3fr) minmax(180px,1.6fr) 1.1fr 54px;gap:12px;padding:0 12px 11px;border-bottom:1px solid var(--border);">
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Datum</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Tip</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Zub</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Deo zuba</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Dg/Th · beleška</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Dr.</span>
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Uredi</span>
+                        </div>
+                        <sc-for list="{{protoRows}}" as="r" hint-placeholder-count="6">
+                          <div style="display:grid;grid-template-columns:110px 96px 100px minmax(170px,1.3fr) minmax(180px,1.6fr) 1.1fr 54px;gap:12px;align-items:center;padding:13px 12px;border-bottom:1px solid var(--line);transition:background .14s;" style-hover="background:var(--surface-2);">
+                            <span style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums;">{{r.date}}</span>
+                            <span style="justify-self:start;padding:3px 10px;border-radius:14px;background:{{r.tipBg}};font-size:11px;font-weight:700;color:{{r.tipFg}};">{{r.tip}}</span>
+                            <span style="font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;">{{r.zub}}</span>
+                            <span style="font-size:13px;color:var(--text-dim);">{{r.deo}}</span>
+                            <span style="font-size:13px;color:var(--text);">{{r.dgth}}</span>
+                            <span style="font-size:12.5px;color:var(--text-dim);">{{r.dr}}</span>
+                            <button style="justify-self:center;width:30px;height:30px;border-radius:8px;background:none;border:none;cursor:pointer;color:var(--text-faint);display:flex;align-items:center;justify-content:center;" style-hover="color:var(--gold);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- SNIMCI / SLIKE -->
+                <sc-if value="{{tabSnimci}}" hint-placeholder-val="{{false}}">
+                  <div style="display:flex;flex-direction:column;gap:18px;">
+                    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:23px;color:var(--text);">Snimci / slike</h2>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;">
+                      <sc-for list="{{imgs}}" as="img" hint-placeholder-count="4">
+                        <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#0d0c0b;aspect-ratio:16/10;cursor:pointer;transition:transform .15s,box-shadow .15s;" style-hover="transform:translateY(-2px);box-shadow:0 14px 32px rgba(0,0,0,0.4);">
+                          <div style="position:absolute;inset:0;background:radial-gradient(125% 100% at 50% 35%, rgba(150,148,134,0.42), rgba(16,15,13,0.96));"></div>
+                          <svg viewBox="0 0 120 40" preserveAspectRatio="none" style="position:absolute;left:0;right:0;bottom:18px;width:100%;height:46%;opacity:0.34;" fill="none" stroke="#e9e3d4" stroke-width="1"><path d="M6 38 Q10 14 16 38 M18 38 Q22 12 28 38 M30 38 Q35 10 41 38 M44 38 Q50 9 56 38 M60 38 Q66 9 72 38 M76 38 Q81 10 86 38 M89 38 Q94 12 99 38 M102 38 Q107 14 113 38"></path></svg>
+                          <div style="position:absolute;left:0;right:0;bottom:0;padding:11px 14px;background:linear-gradient(transparent,rgba(0,0,0,0.68));display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:13px;font-weight:600;color:#f3efe7;">{{img.label}}</span>
+                            <span style="font-size:11px;color:#bdb6a8;font-variant-numeric:tabular-nums;">{{img.sub}}</span>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <!-- ===== USLUGE ===== -->
+      <sc-if value="{{isUsluge}}" hint-placeholder-val="{{false}}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+          <div style="flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:18px 24px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:28px;color:var(--text);">Usluge</h1>
+              <span style="font-size:13px;color:var(--text-dim);">Cenovnik stomatoloških usluga ordinacije</span>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:center;gap:9px;height:40px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:240px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+              <input placeholder="Pretraži usluge…" style="border:none;background:none;outline:none;color:var(--text);font-family:'Manrope';font-size:13px;width:100%;"/>
+            </div>
+            <button style="display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a140a;border:none;border-radius:10px;font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--gold) 40%,transparent);" style-hover="filter:brightness(1.06);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nova usluga</button>
+          </div>
+          <div style="flex:1;overflow:auto;padding:22px 24px 32px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;align-items:start;">
+              <sc-for list="{{serviceCats}}" as="cat" hint-placeholder-count="6">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 18px 8px;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
+                    <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:19px;color:var(--text);">{{cat.cat}}</h3>
+                  </div>
+                  <sc-for list="{{cat.items}}" as="it" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 2px;border-top:1px solid var(--line);">
+                      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                        <span style="font-size:13.5px;font-weight:600;color:var(--text);">{{it.name}}</span>
+                        <span style="font-size:11.5px;color:var(--text-faint);">{{it.dur}}</span>
+                      </div>
+                      <span style="font-size:14px;font-weight:700;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums;">{{it.price}} RSD</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== RAČUNI PACIJENATA ===== -->
+      <sc-if value="{{isRacuni}}" hint-placeholder-val="{{false}}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+          <div style="flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:18px 24px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:28px;color:var(--text);">Računi pacijenata</h1>
+              <span style="font-size:13px;color:var(--text-dim);">Izdati računi, plaćanja i finansijski pregled</span>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:center;gap:9px;height:40px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:240px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+              <input placeholder="Pretraži račune…" style="border:none;background:none;outline:none;color:var(--text);font-family:'Manrope';font-size:13px;width:100%;"/>
+            </div>
+            <button style="display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a140a;border:none;border-radius:10px;font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--gold) 40%,transparent);" style-hover="filter:brightness(1.06);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Novi račun</button>
+          </div>
+          <div style="flex:1;overflow:auto;padding:22px 24px 32px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:22px;">
+              <sc-for list="{{invStats}}" as="st" hint-placeholder-count="4">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:7px;">
+                  <span style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;color:var(--text-faint);text-transform:uppercase;">{{st.label}}</span>
+                  <span style="font-size:22px;font-weight:700;color:{{st.accent}};font-variant-numeric:tabular-nums;">{{st.value}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;">
+              <h3 style="margin:0 0 14px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:19px;color:var(--text);">Svi računi</h3>
+              <div style="overflow-x:auto;">
+                <div style="min-width:760px;">
+                  <div style="display:grid;grid-template-columns:130px minmax(150px,1.3fr) 110px minmax(180px,2fr) 130px 120px;gap:12px;padding:0 12px 11px;border-bottom:1px solid var(--border);">
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Broj računa</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Pacijent</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Datum</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Usluga</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;text-align:right;">Iznos</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-faint);text-transform:uppercase;">Status</span>
+                  </div>
+                  <sc-for list="{{invoices}}" as="iv" hint-placeholder-count="6">
+                    <div style="display:grid;grid-template-columns:130px minmax(150px,1.3fr) 110px minmax(180px,2fr) 130px 120px;gap:12px;align-items:center;padding:13px 12px;border-bottom:1px solid var(--line);transition:background .14s;" style-hover="background:var(--surface-2);">
+                      <span style="font-size:12.5px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums;">{{iv.no}}</span>
+                      <span style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{iv.name}}</span>
+                      <span style="font-size:12.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;">{{iv.date}}</span>
+                      <span style="font-size:12.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{iv.desc}}</span>
+                      <span style="font-size:13.5px;font-weight:700;color:var(--text);text-align:right;font-variant-numeric:tabular-nums;">{{iv.amount}}</span>
+                      <span style="justify-self:start;padding:4px 11px;border-radius:20px;background:{{iv.sBg}};font-size:11px;font-weight:700;color:{{iv.sFg}};white-space:nowrap;">{{iv.status}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+
+    <!-- ===== AGENDA RAIL (Podeljeni) ===== -->
+    <aside style="width:308px;flex:0 0 auto;display:{{agendaDisplay}};flex-direction:column;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;">
+      <div style="padding:20px 20px 14px;border-bottom:1px solid var(--border);">
+        <span style="font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;">Dnevni pregled</span>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px;">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);">{{agendaTitle}}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text-dim);">{{agendaCount}} termina</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;padding:8px 14px 24px;">
+        <sc-for list="{{agendaList}}" as="g" hint-placeholder-count="6">
+          <div onClick="{{g.open}}" style="display:flex;gap:13px;padding:12px 8px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px;transition:background .15s;" style-hover="background:var(--surface-2);">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:0 0 auto;width:44px;">
+              <span style="font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;">{{g.time}}</span>
+              <span style="font-size:10px;color:var(--text-faint);font-variant-numeric:tabular-nums;">{{g.end}}</span>
+            </div>
+            <span style="width:3px;border-radius:2px;background:{{g.color}};flex:0 0 auto;"></span>
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;">
+              <span style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{g.name}}</span>
+              <span style="font-size:11.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{g.proc}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+
+  <!-- DETAIL POPOVER -->
+  <sc-if value="{{modalDetail}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(6,6,8,0.58);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:70;animation:backIn .18s ease;padding:24px;">
+      <div onClick="{{stop}}" style="--mc:{{modalDetail.color}};width:430px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5);animation:modalIn .24s cubic-bezier(.2,.8,.2,1);">
+        <div style="height:5px;background:linear-gradient(90deg,var(--mc),color-mix(in srgb,var(--mc) 40%,transparent));"></div>
+        <div style="padding:22px 24px 0;position:relative;">
+          <button onClick="{{closeModal}}" style="position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+          <span style="display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:20px;background:color-mix(in srgb,var(--mc) 16%,transparent);font-size:11px;font-weight:700;color:var(--mc);"><span style="width:7px;height:7px;border-radius:50%;background:var(--mc);"></span>{{modalDetail.statusLabel}}</span>
+          <h2 style="margin:13px 0 2px;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--text);">{{modalDetail.name}}</h2>
+          <p style="margin:0;font-size:14.5px;color:var(--text-dim);font-weight:500;">{{modalDetail.proc}}</p>
+        </div>
+        <div style="padding:18px 24px;display:flex;flex-direction:column;gap:1px;">
+          <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            <span style="flex:1;font-size:14px;color:var(--text);font-weight:600;">{{modalDetail.time}}</span>
+            <span style="font-size:12.5px;color:var(--text-faint);">{{modalDetail.dur}}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 3v4M16 3v4"></path></svg>
+            <span style="flex:1;font-size:14px;color:var(--text);font-weight:600;">{{modalDetail.dateLabel}}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line);">
+            <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--mc);background:color-mix(in srgb,var(--mc) 18%,transparent);">{{modalDetail.ini}}</span>
+            <span style="flex:1;font-size:14px;color:var(--text);font-weight:600;">{{modalDetail.doctor}}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:11px 0;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 5v2a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2Z"></path></svg>
+            <span style="flex:1;font-size:14px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;">{{modalDetail.tel}}</span>
+          </div>
+          <div style="margin-top:6px;padding:13px 15px;background:var(--surface-2);border-radius:11px;border:1px solid var(--border);">
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--text-faint);text-transform:uppercase;">Napomena</span>
+            <p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:var(--text-dim);">{{modalDetail.note}}</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;padding:0 24px 22px;">
+          <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:42px;background:#25d366;border:none;border-radius:11px;color:#fff;font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;" style-hover="filter:brightness(1.06);"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Z"></path></svg>WhatsApp</button>
+          <button style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Manrope';font-weight:600;font-size:13px;cursor:pointer;" style-hover="border-color:var(--gold-dim);color:var(--gold);">Pozovi</button>
+          <button style="display:flex;align-items:center;justify-content:center;height:42px;padding:0 18px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:none;border-radius:11px;color:#1a140a;font-family:'Manrope';font-weight:700;font-size:13px;cursor:pointer;" style-hover="filter:brightness(1.06);">Izmeni</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- NOVI TERMIN -->
+  <sc-if value="{{modalNew}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(6,6,8,0.58);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:70;animation:backIn .18s ease;padding:24px;">
+      <div onClick="{{stop}}" style="width:460px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5);animation:modalIn .24s cubic-bezier(.2,.8,.2,1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;border-bottom:1px solid var(--border);">
+          <div>
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;">Zakazivanje</span>
+            <h2 style="margin:4px 0 0;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--text);">Novi termin</h2>
+          </div>
+          <button onClick="{{closeModal}}" style="width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);" style-hover="color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Pacijent</label>
+            <input placeholder="Ime i prezime" style="height:42px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Manrope';font-size:14px;outline:none;" style-focus="border-color:var(--gold);"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Procedura</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Implantat – kontrola<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Doktor</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <sc-for list="{{docChips}}" as="dc" hint-placeholder-count="4">
+                <span style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:9px;border:1px solid {{dc.border}};background:{{dc.bg}};cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text);"><span style="width:8px;height:8px;border-radius:50%;background:{{dc.color}};"></span>{{dc.name}}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;">
+            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+              <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Datum i vreme</label>
+              <input value="Sre, 27. 5. · 11:30" style="height:42px;padding:0 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Manrope';font-size:14px;outline:none;" style-focus="border-color:var(--gold);"/>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Trajanje</label>
+              <div style="display:flex;gap:5px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;height:42px;align-items:center;">
+                <span style="padding:6px 11px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--text-faint);cursor:pointer;">30</span>
+                <span style="padding:6px 11px;border-radius:7px;font-size:12.5px;font-weight:700;color:#1a140a;background:var(--gold);cursor:pointer;">45</span>
+                <span style="padding:6px 11px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--text-faint);cursor:pointer;">60</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <label style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase;">Napomena</label>
+            <textarea placeholder="Dodatne informacije…" rows="2" style="padding:11px 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Manrope';font-size:14px;outline:none;resize:none;" style-focus="border-color:var(--gold);"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding:0 24px 22px;">
+          <button onClick="{{closeModal}}" style="height:42px;padding:0 20px;background:transparent;border:1px solid var(--border);border-radius:11px;color:var(--text-dim);font-family:'Manrope';font-weight:600;font-size:13.5px;cursor:pointer;" style-hover="color:var(--text);">Otkaži</button>
+          <button onClick="{{closeModal}}" style="display:flex;align-items:center;gap:8px;height:42px;padding:0 22px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:none;border-radius:11px;color:#1a140a;font-family:'Manrope';font-weight:700;font-size:13.5px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--gold) 42%,transparent);" style-hover="filter:brightness(1.06);">Sačuvaj termin</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;defaultLayout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;standard&quot;,&quot;fokus&quot;,&quot;split&quot;],&quot;default&quot;:&quot;standard&quot;,&quot;tsType&quot;:&quot;'standard'|'fokus'|'split'&quot;}}">
+class Component extends DCLogic {
+  state = { theme: 'dark', layout: 'standard', modal: null, off: {}, nav: 'kalendar', monthOpen: false, patient: null, ptab: 'karton', milk: false, zoom: 1, hideStatus: false };
+
+  componentDidMount() {
+    const p = this.props || {};
+    const s = {};
+    if (p.defaultTheme && p.defaultTheme !== this.state.theme) s.theme = p.defaultTheme;
+    if (p.defaultLayout && p.defaultLayout !== this.state.layout) s.layout = p.defaultLayout;
+    if (Object.keys(s).length) this.setState(s);
+  }
+
+  toggleTheme = () => this.setState(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' }));
+  openDetail = (a) => this.setState({ modal: { type: 'detail', a } });
+  openNew = () => this.setState({ modal: { type: 'new' } });
+  closeModal = () => this.setState({ modal: null });
+  stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+  toggleDoc = (k) => this.setState(s => ({ off: { ...s.off, [k]: !s.off[k] } }));
+  setNav = (k) => this.setState({ nav: k, monthOpen: false });
+  toggleMonth = () => this.setState(s => ({ monthOpen: !s.monthOpen }));
+  closeMonth = () => this.setState({ monthOpen: false });
+  openPatient = (id) => this.setState({ patient: id, ptab: 'karton' });
+  backToList = () => this.setState({ patient: null });
+  setPtab = (k) => this.setState({ ptab: k });
+  toggleMilk = () => this.setState(s => ({ milk: !s.milk }));
+  toggleHideStatus = () => this.setState(s => ({ hideStatus: !s.hideStatus }));
+  zoomIn = () => this.setState(s => ({ zoom: Math.min(1.6, +(s.zoom + 0.15).toFixed(2)) }));
+  zoomOut = () => this.setState(s => ({ zoom: Math.max(0.7, +(s.zoom - 0.15).toFixed(2)) }));
+
+  renderVals() {
+    const GS = 480, GE = 1140, SH = 54;
+    const P = s => { const a = s.split(':'); return (+a[0]) * 60 + (+a[1]); };
+    const fmt = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    const theme = this.state.theme;
+    const layout = this.state.layout;
+    const off = this.state.off;
+    const nav = this.state.nav || 'kalendar';
+
+    const DOCTORS = [
+      { key: 'dv', name: 'Dr. Dragana Vuković', short: 'Dr. Dragana', ini: 'DV', color: '#c9a24b' },
+      { key: 'mi', name: 'Dr. Marko Ilić', short: 'Dr. Marko', ini: 'MI', color: '#bd7b42' },
+      { key: 'np', name: 'Dr. Nina Perić', short: 'Dr. Nina', ini: 'NP', color: '#8a9a6b' },
+      { key: 'sk', name: 'Dr. Stefan Kovač', short: 'Dr. Stefan', ini: 'SK', color: '#a07f9e' },
+    ];
+    const DMAP = {}; DOCTORS.forEach(d => DMAP[d.key] = d);
+    const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
+    const FULLDOW = ['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja'];
+    const DATES = ['25', '26', '27', '28', '29', '30', '31'];
+    const TODAY = 2;
+    const ST = {
+      conf: { l: 'Potvrđeno', c: 'var(--gold)' },
+      pend: { l: 'Na čekanju', c: 'var(--text-dim)' },
+      arr: { l: 'Pacijent stigao', c: '#8a9a6b' },
+    };
+
+    const RAW = [
+      { d:0, s:'08:30', e:'09:15', p:'Marijan Vuković', pr:'Redovni pregled', dr:'dv', st:'conf', tel:'+381 64 123 4567', note:'Polugodišnja kontrola. Pacijent nema tegoba.' },
+      { d:0, s:'09:30', e:'10:30', p:'Jelena Kostić', pr:'Skidanje kamenca', dr:'np', st:'conf', tel:'+381 63 887 2210', note:'Redovno čišćenje i poliranje.' },
+      { d:0, s:'10:00', e:'11:30', p:'Ivan Ilić', pr:'Implantat – ugradnja', dr:'mi', st:'arr', tel:'+381 64 552 1180', note:'Ugradnja implanta u poziciji 36. Pripremljen protokol.' },
+      { d:0, s:'11:00', e:'11:45', p:'Olga Vasić', pr:'Plombiranje', dr:'dv', st:'conf', tel:'+381 65 410 9982', note:'Kompozitna plomba, zub 24.' },
+      { d:0, s:'12:30', e:'13:15', p:'Suzana Tomić', pr:'Beljenje zuba', dr:'sk', st:'pend', tel:'+381 62 330 4471', note:'Prva seansa beljenja.' },
+      { d:0, s:'14:00', e:'15:00', p:'Luka Janković', pr:'Endodoncija', dr:'mi', st:'conf', tel:'+381 64 700 1245', note:'Lečenje kanala, zub 46.' },
+      { d:0, s:'16:30', e:'17:30', p:'Tamara Dorović', pr:'Krunica – cementiranje', dr:'np', st:'conf', tel:'+381 63 119 5567', note:'Postavljanje keramičke krunice.' },
+
+      { d:1, s:'09:00', e:'09:45', p:'Nemanja Stefanović', pr:'Redovni pregled', dr:'dv', st:'conf', tel:'+381 64 220 7781', note:'Kontrolni pregled.' },
+      { d:1, s:'10:00', e:'11:00', p:'Kristina Srećković', pr:'Ortodoncija – kontrola', dr:'sk', st:'conf', tel:'+381 65 661 0034', note:'Stezanje aparata, gornja vilica.' },
+      { d:1, s:'10:30', e:'12:00', p:'Marko Lukić', pr:'Hirurško vađenje umnjaka', dr:'mi', st:'arr', tel:'+381 64 902 3318', note:'Vađenje impaktiranog umnjaka 38.' },
+      { d:1, s:'12:00', e:'12:30', p:'Ana Jandrić', pr:'Skidanje kamenca', dr:'np', st:'conf', tel:'+381 63 558 2290', note:'Čišćenje, blago zapaljenje desni.' },
+      { d:1, s:'13:00', e:'14:30', p:'Dejan Marić', pr:'Implantat – kontrola', dr:'dv', st:'conf', tel:'+381 62 771 4456', note:'Kontrola oseointegracije nakon 3 meseca.' },
+      { d:1, s:'15:00', e:'16:00', p:'Petra Nikolić', pr:'Plombiranje', dr:'np', st:'pend', tel:'+381 64 332 8890', note:'Dve plombe, zubi 16 i 17.' },
+      { d:1, s:'16:30', e:'17:15', p:'Đorđe Mitrović', pr:'Vađenje zuba', dr:'sk', st:'conf', tel:'+381 65 220 1147', note:'Ekstrakcija zuba 25.' },
+
+      { d:2, s:'08:30', e:'09:00', p:'Vadim Sokolov', pr:'Pregled + RTG', dr:'dv', st:'conf', tel:'+381 64 010 2299', note:'Snimanje i procena stanja.' },
+      { d:2, s:'09:00', e:'10:00', p:'Nikola Bukumirić', pr:'Endodoncija', dr:'mi', st:'arr', tel:'+381 63 447 1102', note:'Nastavak lečenja kanala.' },
+      { d:2, s:'09:30', e:'10:30', p:'Restka Zarić', pr:'Beljenje zuba', dr:'np', st:'conf', tel:'+381 64 889 5512', note:'Druga seansa beljenja.' },
+      { d:2, s:'10:30', e:'12:00', p:'Goran Tešić', pr:'Implantat – ugradnja', dr:'dv', st:'conf', tel:'+381 65 332 7741', note:'Ugradnja implanta u poziciji 46.' },
+      { d:2, s:'11:00', e:'11:45', p:'Mladen Radić', pr:'Plombiranje', dr:'sk', st:'pend', tel:'+381 62 118 9930', note:'Kompozitna restauracija zuba 11.' },
+      { d:2, s:'12:30', e:'13:30', p:'Sanja Plazinić', pr:'Proteza – proba', dr:'np', st:'conf', tel:'+381 64 551 3320', note:'Proba parcijalne proteze.' },
+      { d:2, s:'13:00', e:'13:45', p:'Marijan Vuković', pr:'Krunica – proba', dr:'mi', st:'conf', tel:'+381 64 123 4567', note:'Proba boje i oblika krunice.' },
+      { d:2, s:'14:30', e:'15:30', p:'Kristina Srećković', pr:'Ortodoncija – postavljanje', dr:'sk', st:'conf', tel:'+381 65 661 0034', note:'Postavljanje fiksnog aparata.' },
+      { d:2, s:'16:00', e:'17:00', p:'Marko Lukić', pr:'Implantat – kontrola', dr:'dv', st:'pend', tel:'+381 64 902 3318', note:'Postoperativna kontrola.' },
+      { d:2, s:'17:00', e:'18:00', p:'Tamara Radenković', pr:'Skidanje kamenca', dr:'np', st:'conf', tel:'+381 63 770 1129', note:'Redovno čišćenje.' },
+
+      { d:3, s:'09:00', e:'10:30', p:'Iva Vujičić', pr:'Endodoncija', dr:'mi', st:'conf', tel:'+381 64 220 9981', note:'Lečenje kanala, zub 26.' },
+      { d:3, s:'10:00', e:'11:00', p:'Uroš Ranković', pr:'Pregled + RTG', dr:'dv', st:'conf', tel:'+381 65 119 3320', note:'Konsultacija za implantologiju.' },
+      { d:3, s:'11:30', e:'12:15', p:'Aleksandra Tošić', pr:'Plombiranje', dr:'np', st:'pend', tel:'+381 64 558 7712', note:'Plomba na zubu 36.' },
+      { d:3, s:'13:00', e:'14:00', p:'Sanja Plazinić', pr:'Proteza – proba', dr:'sk', st:'conf', tel:'+381 64 551 3320', note:'Finalna proba proteze.' },
+      { d:3, s:'14:30', e:'15:30', p:'Luka Janković', pr:'Krunica – cementiranje', dr:'mi', st:'conf', tel:'+381 64 700 1245', note:'Cementiranje krunice 46.' },
+      { d:3, s:'16:00', e:'17:30', p:'Kristina Srećković', pr:'Implantat – ugradnja', dr:'dv', st:'conf', tel:'+381 65 661 0034', note:'Ugradnja dva implanta.' },
+
+      { d:4, s:'08:30', e:'09:30', p:'Dosen Miloš', pr:'Skidanje kamenca', dr:'np', st:'conf', tel:'+381 64 330 1180', note:'Profesionalno čišćenje.' },
+      { d:4, s:'10:00', e:'11:00', p:'Emilija Kovačević', pr:'Beljenje zuba', dr:'dv', st:'conf', tel:'+381 63 887 2245', note:'Prva seansa beljenja.' },
+      { d:4, s:'11:30', e:'12:30', p:'Konstantin Lazić', pr:'Endodoncija', dr:'mi', st:'pend', tel:'+381 64 119 0098', note:'Hitno lečenje, akutna bol.' },
+      { d:4, s:'13:00', e:'13:45', p:'Nemanja Stefanović', pr:'Kontrola', dr:'dv', st:'conf', tel:'+381 64 220 7781', note:'Kontrola nakon plombiranja.' },
+      { d:4, s:'14:30', e:'16:00', p:'Restka Zarić', pr:'Implantat – ugradnja', dr:'sk', st:'conf', tel:'+381 64 889 5512', note:'Ugradnja implanta, pozicija 16.' },
+      { d:4, s:'16:30', e:'17:15', p:'Olga Vasić', pr:'Plombiranje', dr:'np', st:'conf', tel:'+381 65 410 9982', note:'Zamena stare plombe.' },
+
+      { d:5, s:'09:00', e:'09:45', p:'Ana Jandrić', pr:'Redovni pregled', dr:'dv', st:'conf', tel:'+381 63 558 2290', note:'Kontrola desni.' },
+      { d:5, s:'10:00', e:'11:00', p:'Đorđe Mitrović', pr:'Skidanje kamenca', dr:'np', st:'conf', tel:'+381 65 220 1147', note:'Čišćenje i poliranje.' },
+      { d:5, s:'11:30', e:'12:30', p:'Petra Nikolić', pr:'Beljenje zuba', dr:'sk', st:'pend', tel:'+381 64 332 8890', note:'Završna seansa beljenja.' },
+    ];
+
+    const place = (list) => {
+      const ev = list.map(x => ({ ...x })).sort((a, b) => a._s - b._s || b._e - a._e);
+      let i = 0;
+      while (i < ev.length) {
+        let j = i, end = ev[i]._e;
+        const cluster = [ev[i]];
+        while (j + 1 < ev.length && ev[j + 1]._s < end) { j++; cluster.push(ev[j]); end = Math.max(end, ev[j]._e); }
+        const cols = [];
+        cluster.forEach(e => {
+          let placed = false;
+          for (let c = 0; c < cols.length; c++) { if (e._s >= cols[c]) { e._col = c; cols[c] = e._e; placed = true; break; } }
+          if (!placed) { e._col = cols.length; cols.push(e._e); }
+        });
+        cluster.forEach(e => e._n = cols.length);
+        i = j + 1;
+      }
+      return ev;
+    };
+
+    const days = DOW.map((dow, di) => {
+      const isToday = di === TODAY;
+      const closed = di === 6;
+      const raw = RAW.filter(a => a.d === di).map(a => ({ ...a, _s: P(a.s), _e: P(a.e), doc: DMAP[a.dr] }));
+      const placed = closed ? [] : place(raw);
+      const blocks = placed.map(a => ({
+        top: (a._s - GS) / 30 * SH,
+        height: Math.max((a._e - a._s) / 30 * SH - 4, 24),
+        left: a._col / a._n * 100,
+        width: 100 / a._n,
+        color: a.doc.color,
+        name: a.p,
+        proc: a.pr,
+        time: fmt(a._s) + ' – ' + fmt(a._e),
+        initials: a.doc.ini,
+        dim: off[a.dr] ? 0.28 : 1,
+        open: () => this.openDetail(a),
+      }));
+      return {
+        dow, date: DATES[di], isToday, closed, blocks,
+        dowColor: isToday ? 'var(--gold)' : 'var(--text-faint)',
+        pillBg: isToday ? 'var(--gold)' : 'transparent',
+        pillFg: isToday ? 'var(--bg)' : 'var(--text)',
+        colBg: isToday ? 'color-mix(in srgb, var(--gold) 7%, transparent)' : 'transparent',
+        now: isToday,
+        nowTop: (13 * 60 + 10 - GS) / 30 * SH,
+      };
+    });
+
+    const weekCells = days.map(d => ({
+      dow: d.dow, date: d.date,
+      cellBg: d.isToday ? 'var(--gold)' : 'transparent',
+      cellFg: d.isToday ? 'var(--bg)' : 'var(--text)',
+      cellDow: d.isToday ? 'var(--bg)' : 'var(--text-faint)',
+    }));
+
+    const timeMarks = [];
+    for (let m = GS; m <= GE; m += 30) {
+      const major = m % 60 === 0;
+      timeMarks.push({ label: fmt(m), top: (m - GS) / 30 * SH, op: major ? 1 : 0.5, size: major ? '11px' : '9.5px' });
+    }
+
+    const first = new Date(2026, 4, 1);
+    const lead = (first.getDay() + 6) % 7;
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push(null);
+    for (let d = 1; d <= 31; d++) cells.push(d);
+    while (cells.length % 7) cells.push(null);
+    const monthWeeks = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      monthWeeks.push({
+        days: cells.slice(i, i + 7).map(d => {
+          const inWeek = d >= 25 && d <= 31;
+          const isT = d === 27;
+          return {
+            d: d || '',
+            weight: (isT || inWeek) ? 700 : 500,
+            bg: isT ? 'var(--gold)' : (inWeek ? 'color-mix(in srgb, var(--gold) 13%, transparent)' : 'transparent'),
+            fg: isT ? 'var(--bg)' : (d ? (inWeek ? 'var(--text)' : 'var(--text-dim)') : 'transparent'),
+          };
+        }),
+      });
+    }
+
+    const doctors = DOCTORS.map(dc => {
+      const count = RAW.filter(a => a.dr === dc.key).length;
+      const active = !off[dc.key];
+      return {
+        name: dc.short, color: dc.color, count,
+        dotOp: active ? 1 : 0.25,
+        nameColor: active ? 'var(--text)' : 'var(--text-faint)',
+        toggle: () => this.toggleDoc(dc.key),
+      };
+    });
+
+    const segDefs = [['standard', 'Standard'], ['fokus', 'Fokus'], ['split', 'Podeljeni']];
+    const activeFg = theme === 'dark' ? '#16130b' : '#ffffff';
+    const segs = segDefs.map(([k, lab]) => ({
+      label: lab,
+      bg: layout === k ? 'var(--gold)' : 'transparent',
+      fg: layout === k ? activeFg : 'var(--text-dim)',
+      onClick: () => this.setState({ layout: k }),
+    }));
+
+    const todayRaw = RAW.filter(a => a.d === TODAY).map(a => ({ ...a, _s: P(a.s), _e: P(a.e), doc: DMAP[a.dr] })).sort((a, b) => a._s - b._s);
+    const agendaList = todayRaw.map(a => ({
+      time: fmt(a._s), end: fmt(a._e), name: a.p, proc: a.pr, color: a.doc.color,
+      open: () => this.openDetail(a),
+    }));
+
+    const docChips = DOCTORS.map((d, i) => ({
+      name: d.short.replace('Dr. ', ''), color: d.color,
+      bg: i === 0 ? 'color-mix(in srgb, var(--gold) 14%, transparent)' : 'var(--surface-2)',
+      border: i === 0 ? 'var(--gold-dim)' : 'var(--border)',
+    }));
+
+    // Navigation
+    const navCollapsed = layout === 'fokus';
+    const navDefs = [['kalendar'], ['dnevnik'], ['racuni'], ['usluge']];
+    const nv = {};
+    navDefs.forEach(([k]) => {
+      const a = nav === k;
+      nv[k] = {
+        bg: a ? 'color-mix(in srgb, var(--gold) 13%, transparent)' : 'transparent',
+        fg: a ? 'var(--gold)' : 'var(--text-dim)',
+        bar: a ? 1 : 0,
+        onClick: () => this.setNav(k),
+      };
+    });
+    const isKalendar = nav === 'kalendar';
+    const PLACE = {
+      dnevnik: { t: 'Dnevnik pacijenata', d: 'Kartoni, anamneze i istorija intervencija za svakog pacijenta na jednom mestu.' },
+      racuni: { t: 'Računi pacijenata', d: 'Pregled izdatih računa, evidencija plaćanja i finansijski izveštaji ordinacije.' },
+      usluge: { t: 'Usluge', d: 'Cenovnik i katalog stomatoloških usluga sa trajanjem i cenama.' },
+    };
+    const ph = PLACE[nav] || { t: '', d: '' };
+
+    // ===== DNEVNIK PACIJENATA =====
+    const isDnevnik = nav === 'dnevnik';
+    const isPlaceholder = nav === 'racuni' || nav === 'usluge';
+    const TONES = ['#c9a24b', '#bd7b42', '#8a9a6b', '#a07f9e'];
+    const PT = [
+      { id:1, name:'Ana Kostić', occ:'Nastavnik', no:'104', age:22, loc:'Bačka Palanka', tel:'+381 64 118 2204', mail:'ana.kostic@gmail.com', cond:['Bronhitis'], warn:'Upozorenje: alergija na lokalni anestetik', dr:'dr Emilija Jovanović', last:'18.11.2024', status:'Na terapiji', ini:'AK' },
+      { id:2, name:'Marko Petrović', occ:'Inženjer', no:'087', age:34, loc:'Novi Sad', tel:'+381 63 442 1190', mail:'marko.petrovic@gmail.com', cond:[], warn:'', dr:'dr Marko Ilić', last:'14.11.2024', status:'Aktivan', ini:'MP' },
+      { id:3, name:'Jelena Subotić', occ:'Student', no:'131', age:21, loc:'Beograd', tel:'+381 64 770 5521', mail:'jelena.s@gmail.com', cond:[], warn:'', dr:'dr Nina Perić', last:'09.11.2024', status:'Aktivan', ini:'JS' },
+      { id:4, name:'Nikola Đurić', occ:'Penzioner', no:'045', age:68, loc:'Bačka Palanka', tel:'+381 21 332 0098', mail:'nikola.djuric@gmail.com', cond:['Dijabetes tip 2','Hipertenzija'], warn:'Upozorenje: antikoagulantna terapija', dr:'dr Dragana Vuković', last:'06.11.2024', status:'Na terapiji', ini:'NĐ' },
+      { id:5, name:'Milica Tomašević', occ:'Lekar', no:'112', age:41, loc:'Novi Sad', tel:'+381 64 119 8830', mail:'milica.t@gmail.com', cond:[], warn:'', dr:'dr Emilija Jovanović', last:'02.11.2024', status:'Završeno', ini:'MT' },
+      { id:6, name:'Stefan Lukić', occ:'Programer', no:'156', age:29, loc:'Beograd', tel:'+381 65 220 7741', mail:'stefan.lukic@gmail.com', cond:[], warn:'', dr:'dr Marko Ilić', last:'28.10.2024', status:'Aktivan', ini:'SL' },
+      { id:7, name:'Tamara Ilić', occ:'Pravnik', no:'073', age:37, loc:'Subotica', tel:'+381 64 551 2203', mail:'tamara.ilic@gmail.com', cond:['Trudnoća (II trimestar)'], warn:'Upozorenje: izbegavati RTG snimanje', dr:'dr Nina Perić', last:'24.10.2024', status:'Na terapiji', ini:'TI' },
+      { id:8, name:'Đorđe Vasić', occ:'Mehaničar', no:'098', age:52, loc:'Inđija', tel:'+381 63 880 1147', mail:'djordje.vasic@gmail.com', cond:['Alergija na penicilin'], warn:'Upozorenje: alergija na penicilin', dr:'dr Stefan Kovač', last:'19.10.2024', status:'Završeno', ini:'ĐV' },
+      { id:9, name:'Petra Marković', occ:'Dizajner', no:'140', age:26, loc:'Novi Sad', tel:'+381 64 332 9981', mail:'petra.m@gmail.com', cond:[], warn:'', dr:'dr Dragana Vuković', last:'15.10.2024', status:'Nov', ini:'PM' },
+      { id:10, name:'Luka Janković', occ:'Profesor', no:'061', age:45, loc:'Beograd', tel:'+381 65 118 4420', mail:'luka.jankovic@gmail.com', cond:['Bruksizam'], warn:'', dr:'dr Marko Ilić', last:'10.10.2024', status:'Aktivan', ini:'LJ' },
+    ];
+    const stCol = (s) => s === 'Na terapiji' ? 'var(--gold)' : (s === 'Aktivan' ? '#8a9a6b' : (s === 'Nov' ? '#3b6fb0' : 'var(--text-dim)'));
+    const patientRows = PT.map((p, i) => ({
+      name: p.name, occ: p.occ, no: p.no, age: p.age, loc: p.loc, dr: p.dr, last: p.last, status: p.status, ini: p.ini,
+      tone: TONES[i % 4],
+      warnOp: p.warn ? 1 : 0,
+      statusBg: 'color-mix(in srgb, ' + stCol(p.status) + ' 15%, transparent)',
+      statusFg: stCol(p.status),
+      open: () => this.openPatient(p.id),
+    }));
+
+    const sp = PT.find(p => p.id === this.state.patient) || null;
+    const hasPatient = !!sp;
+    const detail = sp ? {
+      name: sp.name, occ: sp.occ, no: sp.no, age: String(sp.age), loc: sp.loc, tel: sp.tel, mail: sp.mail,
+      dr: sp.dr, ini: sp.ini, tone: TONES[(sp.id - 1) % 4], warn: sp.warn,
+    } : { name:'', occ:'', no:'', age:'', loc:'', tel:'', mail:'', dr:'', ini:'', tone:'#c9a24b', warn:'' };
+    const condList = sp ? sp.cond.map(c => ({ t: c })) : [];
+    const hasWarn = !!(sp && sp.warn);
+
+    const ptab = this.state.ptab || 'karton';
+    const ptabDefs = [['karton', 'Karton Pacijenta'], ['zubi', 'Grafički Prikaz Zuba'], ['protokol', 'Protokol Pacijenta'], ['snimci', 'Snimci / Slike']];
+    const ptabs = ptabDefs.map(([k, lab]) => ({
+      label: lab,
+      fg: ptab === k ? 'var(--gold)' : 'var(--text-dim)',
+      bar: ptab === k ? 1 : 0,
+      onClick: () => this.setPtab(k),
+    }));
+    const tabKarton = ptab === 'karton';
+    const tabZubi = ptab === 'zubi';
+    const tabProtokol = ptab === 'protokol';
+    const tabSnimci = ptab === 'snimci';
+
+    // Odontogram
+    const C_CAR = 'var(--danger)', C_FILL = '#3a3a3e', C_RC = '#c9a24b', C_CER = '#3b6fb0', C_ORA = '#cf8a2e';
+    const Mp = 'M10 4 Q24 0 38 4 Q44 14 40 24 Q39 30 34 32 L33 56 Q32 64 29 64 Q26 64 25 54 L24 40 Q23.5 37 22.5 40 L21 54 Q20 64 17 64 Q14 64 13 56 L12 32 Q7 30 8 24 Q4 14 10 4 Z';
+    const Fp = 'M16 4 Q24 0 28 9 Q32 17 30 25 L27 56 Q25 66 22 66 Q19 66 17 56 L14 25 Q12 17 16 4 Z';
+    const VB = '0 0 44 70';
+    const mk = (l, t, c, s) => ({ l: l + '%', t: t + '%', c: c, s: (s || 10) + 'px' });
+    const milk = this.state.milk;
+    let upN, upM, loM, brdf;
+    if (!milk) {
+      upN = [8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8];
+      upM = { 0:[mk(34,22,C_FILL,11)], 1:[mk(50,72,C_RC,9),mk(36,66,C_RC,7)], 2:[mk(50,16,C_CAR,12)], 4:[mk(48,24,C_FILL,9)], 5:[mk(70,30,C_CER,10)], 10:[mk(50,72,C_ORA,9)], 12:[mk(78,28,C_CAR,10)], 13:[mk(32,18,C_RC,10),mk(64,18,C_RC,9)], 14:[mk(50,16,C_ORA,11)], 15:[mk(76,30,C_CAR,12)] };
+      loM = { 0:[mk(30,18,C_CAR,12),mk(60,40,C_FILL,9)], 1:[mk(76,28,C_CAR,10)], 6:[mk(50,62,C_ORA,9)], 9:[mk(50,16,C_FILL,9)], 15:[mk(70,20,C_FILL,12)] };
+      brdf = [{ row:'u', from:0, to:2 }, { row:'l', from:11, to:13 }];
+    } else {
+      upN = [5,4,3,2,1,1,2,3,4,5];
+      upM = { 0:[mk(40,20,C_CAR,11)], 8:[mk(50,16,C_FILL,9)] };
+      loM = { 4:[mk(50,18,C_CAR,10)], 5:[mk(50,18,C_ORA,9)] };
+      brdf = [];
+    }
+    const count = upN.length;
+    const chartCols = upN.map((n, i) => ({
+      n: String(n),
+      path: n >= 6 ? Mp : Fp, vb: VB,
+      uMarks: upM[i] || [], lMarks: loM[i] || [],
+    }));
+    const colPct = (100 / count) + '%';
+    const bridges = brdf.map(b => ({
+      isUpper: b.row === 'u',
+      left: (b.from / count * 100) + '%',
+      width: ((b.to - b.from + 1) / count * 100) + '%',
+    }));
+    const bridgesUp = bridges.filter(b => b.isUpper).map(b => ({ left: b.left, width: b.width }));
+    const bridgesLo = bridges.filter(b => !b.isUpper).map(b => ({ left: b.left, width: b.width }));
+    const zoom = this.state.zoom;
+    const milkTrackBg = milk ? 'var(--gold)' : 'var(--border)';
+    const milkKnobX = milk ? '20px' : '2px';
+
+    // Protocol
+    const PROTO = [
+      { date:'18-11-2024', tip:'Terapija', zub:'38', deo:'Mezijalno, Inciz./Okluzalno', dgth:'th: Amalgamski ispun', dr:'dr Emilija Jovanović' },
+      { date:'12-11-2024', tip:'Terapija', zub:'14, 16, 18', deo:'Ceo zub', dgth:'th: Bezmetalni cirkonijum most', dr:'dr Emilija Jovanović' },
+      { date:'11-11-2024', tip:'Status', zub:'44', deo:'Kanal korena', dgth:'dg: Punjenje kanala korena', dr:'dr Emilija Jovanović' },
+      { date:'05-11-2024', tip:'Terapija', zub:'21', deo:'Buko-mezijalni kanal', dgth:'th: Definitivno punjenje', dr:'dr Marko Ilić' },
+      { date:'28-10-2024', tip:'Status', zub:'36', deo:'Okluzalno', dgth:'dg: Duboki karijes', dr:'dr Nina Perić' },
+      { date:'21-10-2024', tip:'Terapija', zub:'11, 21', deo:'Vestibularno', dgth:'th: Kompozitne fasete', dr:'dr Emilija Jovanović' },
+      { date:'14-10-2024', tip:'Pregled', zub:'—', deo:'Svi kvadranti', dgth:'dg: Redovna kontrola', dr:'dr Dragana Vuković' },
+      { date:'02-10-2024', tip:'Terapija', zub:'47', deo:'Distalno', dgth:'th: Glas-jonomerni ispun', dr:'dr Marko Ilić' },
+    ];
+    const tipCol = (t) => t === 'Terapija' ? 'var(--gold)' : (t === 'Status' ? '#8a9a6b' : '#bd7b42');
+    const protoRows = PROTO.filter(r => !(this.state.hideStatus && r.tip === 'Status')).map(r => ({
+      date: r.date, tip: r.tip, zub: r.zub, deo: r.deo, dgth: r.dgth, dr: r.dr,
+      tipBg: 'color-mix(in srgb, ' + tipCol(r.tip) + ' 16%, transparent)',
+      tipFg: tipCol(r.tip),
+    }));
+    const protoCount = PROTO.length;
+    const hideStatus = this.state.hideStatus;
+    const hideTrackBg = hideStatus ? 'var(--gold)' : 'var(--border)';
+    const hideKnobX = hideStatus ? '20px' : '2px';
+
+    const imgs = [
+      { label: 'Panoramski snimak · OPT', sub: '18.11.2024' },
+      { label: 'RVG · zub 36', sub: '28.10.2024' },
+      { label: 'Intraoralni snimak', sub: '21.10.2024' },
+      { label: 'RVG · zub 21', sub: '05.11.2024' },
+    ];
+
+    // ===== RAČUNI & USLUGE =====
+    const isRacuni = nav === 'racuni';
+    const isUsluge = nav === 'usluge';
+    const fr = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const serviceCats = [
+      { cat: 'Pregledi i preventiva', items: [
+        { name: 'Stomatološki pregled', dur: '20 min', price: '1.500' },
+        { name: 'Čišćenje zubnog kamenca (ultrazvuk)', dur: '30 min', price: '4.000' },
+        { name: 'Poliranje zuba — Air Flow', dur: '30 min', price: '3.500' },
+        { name: 'Fluorizacija', dur: '15 min', price: '2.000' },
+      ] },
+      { cat: 'Konzervativna stomatologija', items: [
+        { name: 'Kompozitni (beli) ispun', dur: '40 min', price: '4.500' },
+        { name: 'Glas-jonomerni ispun', dur: '35 min', price: '3.500' },
+        { name: 'Lečenje karijesa', dur: '45 min', price: '5.000' },
+        { name: 'Zalivanje fisura', dur: '20 min', price: '2.500' },
+      ] },
+      { cat: 'Endodoncija', items: [
+        { name: 'Lečenje kanala korena — 1 kanal', dur: '60 min', price: '6.000' },
+        { name: 'Lečenje kanala — višekoreni zub', dur: '90 min', price: '9.000' },
+        { name: 'Definitivno punjenje kanala', dur: '45 min', price: '4.500' },
+      ] },
+      { cat: 'Oralna hirurgija', items: [
+        { name: 'Vađenje zuba', dur: '30 min', price: '3.000' },
+        { name: 'Hirurško vađenje umnjaka', dur: '60 min', price: '12.000' },
+        { name: 'Apikotomija', dur: '75 min', price: '15.000' },
+        { name: 'Ugradnja implanta', dur: '90 min', price: '45.000' },
+      ] },
+      { cat: 'Protetika', items: [
+        { name: 'Metalokeramička krunica (po članu)', dur: '—', price: '12.000' },
+        { name: 'Bezmetalna cirkonijum krunica', dur: '—', price: '22.000' },
+        { name: 'Totalna proteza (akrilat)', dur: '—', price: '45.000' },
+        { name: 'Parcijalna proteza', dur: '—', price: '38.000' },
+        { name: 'Zamena gumica na fiksnoj protezi', dur: '20 min', price: '1.500' },
+        { name: 'Reparatura proteze', dur: '—', price: '4.000' },
+      ] },
+      { cat: 'Estetika i ortodoncija', items: [
+        { name: 'Beljenje zuba (ordinacijsko)', dur: '60 min', price: '18.000' },
+        { name: 'Kompozitne fasete (po zubu)', dur: '—', price: '9.000' },
+        { name: 'Fiksni ortodontski aparat (po vilici)', dur: '—', price: '60.000' },
+        { name: 'Pokretni ortodontski aparat', dur: '—', price: '25.000' },
+      ] },
+    ];
+    const INV = [
+      { no: 'R-2024-0142', name: 'Ana Kostić', date: '18.11.2024', desc: 'Amalgamski ispun · zub 38', amount: 4500, status: 'Plaćeno' },
+      { no: 'R-2024-0141', name: 'Nikola Đurić', date: '16.11.2024', desc: 'Cirkonijum most · 3 člana', amount: 66000, status: 'Na čekanju' },
+      { no: 'R-2024-0139', name: 'Marko Petrović', date: '14.11.2024', desc: 'Vađenje zuba + RTG snimak', amount: 4500, status: 'Plaćeno' },
+      { no: 'R-2024-0137', name: 'Jelena Subotić', date: '09.11.2024', desc: 'Čišćenje kamenca + Air Flow', amount: 7500, status: 'Plaćeno' },
+      { no: 'R-2024-0135', name: 'Tamara Ilić', date: '24.10.2024', desc: 'Lečenje kanala korena', amount: 9000, status: 'Delimično' },
+      { no: 'R-2024-0132', name: 'Đorđe Vasić', date: '19.10.2024', desc: 'Totalna proteza (gornja vilica)', amount: 45000, status: 'Na čekanju' },
+      { no: 'R-2024-0130', name: 'Milica Tomašević', date: '02.11.2024', desc: 'Beljenje zuba (ordinacijsko)', amount: 18000, status: 'Plaćeno' },
+      { no: 'R-2024-0128', name: 'Luka Janković', date: '10.10.2024', desc: 'Kompozitne fasete · 2 zuba', amount: 18000, status: 'Plaćeno' },
+    ];
+    let invPaid = 0, invPend = 0, invTotal = 0;
+    INV.forEach(i => { invTotal += i.amount; if (i.status === 'Plaćeno') invPaid += i.amount; else invPend += i.amount; });
+    const invSt = (s) => s === 'Plaćeno' ? '#8a9a6b' : (s === 'Delimično' ? 'var(--gold)' : 'var(--danger)');
+    const invoices = INV.map(i => ({
+      no: i.no, name: i.name, date: i.date, desc: i.desc, amount: fr(i.amount) + ' RSD', status: i.status,
+      sBg: 'color-mix(in srgb, ' + invSt(i.status) + ' 15%, transparent)', sFg: invSt(i.status),
+    }));
+    const invStats = [
+      { label: 'Naplaćeno', value: fr(invPaid) + ' RSD', accent: '#8a9a6b' },
+      { label: 'Na čekanju', value: fr(invPend) + ' RSD', accent: 'var(--gold)' },
+      { label: 'Izdato računa', value: String(INV.length), accent: 'var(--text)' },
+      { label: 'Prosečan račun', value: fr(Math.round(invTotal / INV.length)) + ' RSD', accent: 'var(--text)' },
+    ];
+
+    const m = this.state.modal;
+    let modalDetail = null;
+    if (m && m.type === 'detail') {
+      const a = m.a;
+      const dur = (P(a.e) - P(a.s));
+      modalDetail = {
+        name: a.p, proc: a.pr, color: a.doc.color, ini: a.doc.ini, doctor: a.doc.name,
+        time: a.s + ' – ' + a.e, dur: dur + ' min',
+        dateLabel: FULLDOW[a.d] + ', ' + DATES[a.d] + '. maj 2026',
+        tel: a.tel, note: a.note,
+        statusLabel: ST[a.st].l, statusColor: ST[a.st].c,
+      };
+    }
+
+    return {
+      theme,
+      sidebarW: navCollapsed ? 70 : 262,
+      navJustify: navCollapsed ? 'center' : 'flex-start',
+      labelDisplay: navCollapsed ? 'none' : 'block',
+      labelFlex: navCollapsed ? 'none' : 'flex',
+      sectionDisplay: navCollapsed ? 'none' : 'block',
+      nv,
+      isKalendar,
+      isDnevnik,
+      isRacuni, isUsluge,
+      serviceCats, invoices, invStats,
+      hasPatient, listView: isDnevnik && !hasPatient, detailView: isDnevnik && hasPatient,
+      patientRows, detail, condList, hasWarn,
+      ptabs, tabKarton, tabZubi, tabProtokol, tabSnimci,
+      chartCols, bridges, bridgesUp, bridgesLo, colPct, zoom,
+      milkTrackBg, milkKnobX,
+      protoRows, protoCount, hideTrackBg, hideKnobX, imgs,
+      backToList: this.backToList,
+      toggleMilk: this.toggleMilk,
+      toggleHideStatus: this.toggleHideStatus,
+      zoomIn: this.zoomIn,
+      zoomOut: this.zoomOut,
+      monthOpen: this.state.monthOpen,
+      monthChevron: this.state.monthOpen ? '180deg' : '0deg',
+      agendaDisplay: (isKalendar && layout === 'split') ? 'flex' : 'none',
+      days, timeMarks, monthWeeks, doctors, segs, docChips, agendaList, weekCells,
+      monthLabel: 'MAJ 2026',
+      weekRangeLabel: 'Maj 25 – Maj 31, 2026',
+      gridHeight: (GE - GS) / 30 * SH,
+      apptTotal: RAW.length,
+      agendaTitle: 'Sreda · 27. maj',
+      agendaCount: agendaList.length,
+      sunBg: theme === 'light' ? 'var(--gold)' : 'transparent',
+      sunFg: theme === 'light' ? '#fff' : 'var(--text-faint)',
+      moonBg: theme === 'dark' ? 'var(--gold)' : 'transparent',
+      moonFg: theme === 'dark' ? '#15130c' : 'var(--text-faint)',
+      modalDetail,
+      modalNew: !!(m && m.type === 'new'),
+      toggleTheme: this.toggleTheme,
+      openNew: this.openNew,
+      closeModal: this.closeModal,
+      stop: this.stop,
+      toggleMonth: this.toggleMonth,
+      closeMonth: this.closeMonth,
+    };
+  }
+}
+</script>
+</body>
+</html>

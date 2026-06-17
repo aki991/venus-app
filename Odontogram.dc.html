@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;width:100%;overflow-x:auto;padding-bottom:4px;">
+  <div style="position:relative;min-width:{{minW}}px;zoom:{{zoom}};margin:0 auto;">
+
+    <div style="display:flex;align-items:flex-end;position:relative;padding:0 2px;">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="16">
+        <div style="flex:1;display:flex;justify-content:center;">
+          <div style="position:relative;width:{{toothW}}px;height:{{toothH}}px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.18));">
+            <svg viewBox="{{c.vb}}" style="width:100%;height:100%;display:block;transform:scaleY(-1);" fill="var(--tooth)" stroke="var(--tooth-line)" stroke-width="1.3" stroke-linejoin="round"><path d="{{c.path}}"></path></svg>
+            <sc-for list="{{c.uMarks}}" as="m" hint-placeholder-count="0">
+              <div style="position:absolute;left:{{m.l}};top:{{m.t}};width:{{m.s}};height:{{m.s}};background:{{m.c}};border-radius:3px;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(0,0,0,0.2);"></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-for list="{{bridgesUp}}" as="br" hint-placeholder-count="0">
+        <div style="position:absolute;bottom:-2px;left:{{br.left}};width:{{br.width}};display:flex;align-items:flex-end;height:11px;">
+          <span style="width:2px;height:10px;background:var(--gold);border-radius:1px;"></span>
+          <span style="flex:1;height:2px;background:var(--gold);align-self:flex-end;"></span>
+          <span style="width:2px;height:10px;background:var(--gold);border-radius:1px;"></span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;padding:6px 2px;">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="16">
+        <span style="flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--text-dim);font-variant-numeric:tabular-nums;">{{c.n}}</span>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;position:relative;padding:0 2px;">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="16">
+        <div style="flex:1;display:flex;justify-content:center;">
+          <div style="position:relative;width:{{toothW}}px;height:{{toothH}}px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.18));">
+            <svg viewBox="{{c.vb}}" style="width:100%;height:100%;display:block;" fill="var(--tooth)" stroke="var(--tooth-line)" stroke-width="1.3" stroke-linejoin="round"><path d="{{c.path}}"></path></svg>
+            <sc-for list="{{c.lMarks}}" as="m" hint-placeholder-count="0">
+              <div style="position:absolute;left:{{m.l}};top:{{m.t}};width:{{m.s}};height:{{m.s}};background:{{m.c}};border-radius:3px;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(0,0,0,0.2);"></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-for list="{{bridgesLo}}" as="br" hint-placeholder-count="0">
+        <div style="position:absolute;top:-2px;left:{{br.left}};width:{{br.width}};display:flex;align-items:flex-start;height:11px;">
+          <span style="width:2px;height:10px;background:var(--gold);border-radius:1px;"></span>
+          <span style="flex:1;height:2px;background:var(--gold);"></span>
+          <span style="width:2px;height:10px;background:var(--gold);border-radius:1px;"></span>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:760,&quot;height&quot;:220},&quot;cols&quot;:{&quot;editor&quot;:null,&quot;default&quot;:[]},&quot;bridgesUp&quot;:{&quot;editor&quot;:null,&quot;default&quot;:[]},&quot;bridgesLo&quot;:{&quot;editor&quot;:null,&quot;default&quot;:[]},&quot;toothW&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:40},&quot;toothH&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:66},&quot;minW&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:760},&quot;zoom&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:1}}"></script>
+</body>
+</html>
