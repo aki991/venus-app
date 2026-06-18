@@ -8,9 +8,11 @@ export interface AppointmentWithRelations {
   notes: string | null;
   doctor_id: string | null;
   patient_id: string | null;
+  chair_id: string | null;
   walk_in_name: string | null;
   walk_in_phone: string | null;
   service: { id: string; name: string; duration_minutes: number } | null;
+  chair: { id: string; name: string } | null;
   doctor: {
     id: string;
     first_name: string | null;
@@ -27,25 +29,32 @@ export interface AppointmentWithRelations {
 
 export async function fetchAppointmentsForWeek(
   weekStart: Date,
-  weekEnd: Date
+  weekEnd: Date,
+  chairId: string | null // null = sve stolice (fallback)
 ): Promise<AppointmentWithRelations[]> {
   const supabase = createBrowserClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("appointments")
     .select(
       `
-      id, starts_at, ends_at, status, notes, doctor_id, patient_id,
+      id, starts_at, ends_at, status, notes, doctor_id, patient_id, chair_id,
       walk_in_name, walk_in_phone,
       service:services(id, name, duration_minutes),
+      chair:chairs(id, name),
       doctor:profiles!appointments_doctor_id_fkey(id, first_name, last_name, initials, color_hex),
       patient:profiles!appointments_patient_id_fkey(id, first_name, last_name)
     `
     )
     .gte("starts_at", weekStart.toISOString())
     .lt("starts_at", weekEnd.toISOString())
-    .neq("status", "cancelled")
-    .order("starts_at", { ascending: true });
+    .neq("status", "cancelled");
+
+  if (chairId) {
+    query = query.eq("chair_id", chairId);
+  }
+
+  const { data, error } = await query.order("starts_at", { ascending: true });
 
   if (error) throw error;
   return (data as unknown as AppointmentWithRelations[]) ?? [];
@@ -54,6 +63,7 @@ export async function fetchAppointmentsForWeek(
 export interface CreateAppointmentInput {
   doctor_id: string;
   service_id: string | null;
+  chair_id: string;
   starts_at: string; // ISO
   ends_at: string; // ISO
   status: "pending" | "confirmed";
@@ -62,6 +72,26 @@ export interface CreateAppointmentInput {
   patient_id: string | null;
   walk_in_name: string | null;
   walk_in_phone: string | null;
+}
+
+// 23P01 = exclusion constraint. Sad postoje DVA: per-doctor (appointments_no_overlap)
+// i per-chair (appointments_no_overlap_chair). Razlikujemo po imenu u poruci da bismo
+// u UI-u prikazali precizniju poruku. Vrati null ako nije overlap greška.
+function overlapError(error: { code?: string; message?: string }): Error | null {
+  if (error.code !== "23P01") return null;
+  if ((error.message ?? "").includes("chair")) return new Error("OVERLAP_CHAIR");
+  return new Error("OVERLAP_DOCTOR");
+}
+
+// Mapira grešku zakazivanja u srpsku poruku za toast (precizno za overlap, inače fallback).
+export function appointmentErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) {
+    if (err.message === "OVERLAP_CHAIR")
+      return "Stolica je već zauzeta u tom periodu";
+    if (err.message === "OVERLAP_DOCTOR")
+      return "Doktor je već zauzet u tom periodu";
+  }
+  return fallback;
 }
 
 export async function createAppointment(input: CreateAppointmentInput) {
@@ -77,10 +107,8 @@ export async function createAppointment(input: CreateAppointmentInput) {
     .single();
 
   if (error) {
-    // 23P01 = exclusion constraint (preklapanje termina za istog doktora)
-    if (error.code === "23P01") {
-      throw new Error("OVERLAP"); // hvatamo u UI-u sa user-friendly porukom
-    }
+    const overlap = overlapError(error);
+    if (overlap) throw overlap;
     throw error;
   }
   return data;
@@ -94,6 +122,7 @@ export interface UpdateAppointmentInput {
   admin_notes?: string | null;
   doctor_id?: string;
   service_id?: string | null;
+  chair_id?: string;
 }
 
 export async function updateAppointment(
@@ -110,7 +139,8 @@ export async function updateAppointment(
     .single();
 
   if (error) {
-    if (error.code === "23P01") throw new Error("OVERLAP");
+    const overlap = overlapError(error);
+    if (overlap) throw overlap;
     throw error;
   }
   return data;

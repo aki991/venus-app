@@ -8,8 +8,10 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/lib/db/appointments";
+import { appointmentErrorMessage } from "@/lib/db/appointments";
 import { useDoctors } from "@/hooks/useDoctors";
 import { useServices } from "@/hooks/useServices";
+import { useChairs } from "@/hooks/useChairs";
 import {
   useCancelAppointment,
   useUpdateAppointment,
@@ -35,41 +37,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { STATUS_CONFIG } from "@/lib/constants/appointmentStatus";
+import {
+  fitsWithinWorkingHours,
+  getTimeSlots,
+  isWorkingDay,
+} from "@/lib/constants/workingHours";
 import { addMinutesISO, toISO } from "./NewAppointmentModal";
 
 type AppointmentStatus = AppointmentWithRelations["status"];
 
-const STATUS_CONFIG: Record<
-  AppointmentStatus,
-  { label: string; className: string }
-> = {
-  pending: {
-    label: "Na čekanju",
-    className: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  },
-  confirmed: {
-    label: "Potvrđen",
-    className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  },
-  cancelled: {
-    label: "Otkazan",
-    className: "bg-red-500/15 text-red-600 dark:text-red-400",
-  },
-  completed: {
-    label: "Završen",
-    className: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
-  },
-  no_show: {
-    label: "Nije se pojavio",
-    className: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
-  },
-};
-
 const EDIT_STATUSES: { value: AppointmentStatus; label: string }[] = [
-  { value: "confirmed", label: "Potvrđen" },
-  { value: "pending", label: "Na čekanju" },
-  { value: "completed", label: "Završen" },
-  { value: "no_show", label: "Nije se pojavio" },
+  { value: "confirmed", label: STATUS_CONFIG.confirmed.label },
+  { value: "pending", label: STATUS_CONFIG.pending.label },
+  { value: "completed", label: STATUS_CONFIG.completed.label },
+  { value: "no_show", label: STATUS_CONFIG.no_show.label },
 ];
 
 type Mode = "view" | "edit" | "cancel";
@@ -92,8 +74,16 @@ function patientDisplay(appt: AppointmentWithRelations): {
 
 function StatusBadge({ status }: { status: AppointmentStatus }) {
   const cfg = STATUS_CONFIG[status];
+  const Icon = cfg.icon;
   return (
-    <Badge className={cn("border-transparent", cfg.className)}>
+    <Badge
+      className="gap-1 border-transparent"
+      style={{
+        backgroundColor: `color-mix(in srgb, ${cfg.color} 18%, transparent)`,
+        color: cfg.color,
+      }}
+    >
+      <Icon size={12} />
       {cfg.label}
     </Badge>
   );
@@ -212,6 +202,7 @@ function ViewMode({ appointment }: { appointment: AppointmentWithRelations }) {
         </div>
       </InfoRow>
       <InfoRow label="Doktor">{doctorName}</InfoRow>
+      <InfoRow label="Stolica">{appointment.chair?.name ?? "—"}</InfoRow>
       <InfoRow label="Usluga">{appointment.service?.name ?? "—"}</InfoRow>
       <InfoRow label="Datum">
         {format(start, "EEEE, d. MMMM yyyy.", { locale: sr })}
@@ -243,6 +234,7 @@ function EditMode({
 }) {
   const { data: doctors } = useDoctors();
   const { data: services } = useServices();
+  const { data: chairs } = useChairs();
   const updateMutation = useUpdateAppointment();
 
   const start = parseISO(appointment.starts_at);
@@ -253,6 +245,7 @@ function EditMode({
   );
 
   const [doctorId, setDoctorId] = useState(appointment.doctor_id ?? "");
+  const [chairId, setChairId] = useState(appointment.chair_id ?? "");
   const [serviceId, setServiceId] = useState<string | null>(
     appointment.service?.id ?? null
   );
@@ -267,8 +260,20 @@ function EditMode({
       toast.error("Izaberite doktora");
       return;
     }
+    if (!chairId) {
+      toast.error("Izaberite stolicu");
+      return;
+    }
     if (!date || !time) {
       toast.error("Izaberite datum i vreme");
+      return;
+    }
+    if (!isWorkingDay(date)) {
+      toast.error("Ordinacija ne radi vikendom");
+      return;
+    }
+    if (!fitsWithinWorkingHours(time, duration)) {
+      toast.error("Termin bi se završio nakon radnog vremena (15:00)");
       return;
     }
     const startsAt = toISO(date, time);
@@ -279,6 +284,7 @@ function EditMode({
         id: appointment.id,
         input: {
           doctor_id: doctorId,
+          chair_id: chairId,
           service_id: serviceId,
           starts_at: startsAt,
           ends_at: endsAt,
@@ -293,11 +299,7 @@ function EditMode({
       toast.success("Termin izmenjen");
       onDone();
     } catch (err) {
-      if (err instanceof Error && err.message === "OVERLAP") {
-        toast.error("Termin se preklapa sa drugim terminom ovog doktora");
-      } else {
-        toast.error("Greška pri izmeni termina");
-      }
+      toast.error(appointmentErrorMessage(err, "Greška pri izmeni termina"));
     }
   }
 
@@ -320,6 +322,24 @@ function EditMode({
           </SelectContent>
         </Select>
       </div>
+
+      {(chairs?.length ?? 0) > 1 && (
+        <div className="grid gap-1.5">
+          <Label>Stolica</Label>
+          <Select value={chairId || undefined} onValueChange={setChairId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Izaberite stolicu" />
+            </SelectTrigger>
+            <SelectContent>
+              {(chairs ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="grid gap-1.5">
         <Label>Usluga</Label>
@@ -355,11 +375,18 @@ function EditMode({
         </div>
         <div className="grid gap-1.5">
           <Label>Vreme</Label>
-          <Input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
+          <Select value={time || undefined} onValueChange={setTime}>
+            <SelectTrigger>
+              <SelectValue placeholder="Vreme" />
+            </SelectTrigger>
+            <SelectContent>
+              {getTimeSlots().map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid gap-1.5">
           <Label>Trajanje (min)</Label>

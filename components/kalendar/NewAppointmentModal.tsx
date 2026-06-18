@@ -11,10 +11,14 @@ import {
   type AppointmentFormInput,
 } from "@/lib/validations/appointment";
 import type { PatientSearchResult } from "@/lib/db/patients";
+import { appointmentErrorMessage } from "@/lib/db/appointments";
 import { useDoctors } from "@/hooks/useDoctors";
 import { useServices } from "@/hooks/useServices";
+import { useChairs } from "@/hooks/useChairs";
 import { useCreateAppointment } from "@/hooks/useAppointmentMutations";
 import type { NewAppointmentDefaults } from "@/stores/appointmentModalStore";
+import { useKalendarStore } from "@/stores/kalendarStore";
+import { getTimeSlots } from "@/lib/constants/workingHours";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,10 +57,14 @@ export function addMinutesISO(iso: string, minutes: number): string {
   return new Date(new Date(iso).getTime() + minutes * 60_000).toISOString();
 }
 
-function buildDefaults(d: NewAppointmentDefaults | null): AppointmentFormInput {
+function buildDefaults(
+  d: NewAppointmentDefaults | null,
+  chairId: string
+): AppointmentFormInput {
   return {
     doctor_id: d?.doctor_id ?? "",
     service_id: null,
+    chair_id: chairId,
     date: d?.date ?? "",
     time: d?.time ?? "",
     duration_minutes: 30,
@@ -82,20 +90,25 @@ export function NewAppointmentModal({
 }: NewAppointmentModalProps) {
   const { data: doctors } = useDoctors();
   const { data: services } = useServices();
+  const { data: chairs } = useChairs();
+  const selectedChairId = useKalendarStore((s) => s.selectedChairId);
   const createMutation = useCreateAppointment();
+
+  // Default stolica = trenutno izabrana u kalendaru (ili prva dostupna).
+  const defaultChairId = selectedChairId ?? chairs?.[0]?.id ?? "";
 
   const [selectedPatient, setSelectedPatient] =
     useState<PatientSearchResult | null>(null);
 
   const form = useForm<AppointmentFormInput>({
     resolver: zodResolver(appointmentSchema),
-    defaultValues: buildDefaults(defaultValues ?? null),
+    defaultValues: buildDefaults(defaultValues ?? null, defaultChairId),
   });
 
   // Reset forme svaki put kad se modal otvori sa novim defaultima (npr. iz slota).
   useEffect(() => {
     if (isOpen) {
-      form.reset(buildDefaults(defaultValues ?? null));
+      form.reset(buildDefaults(defaultValues ?? null, defaultChairId));
       setSelectedPatient(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,6 +124,7 @@ export function NewAppointmentModal({
       await createMutation.mutateAsync({
         doctor_id: values.doctor_id,
         service_id: values.service_id,
+        chair_id: values.chair_id,
         starts_at: startsAt,
         ends_at: endsAt,
         status: values.status,
@@ -125,11 +139,7 @@ export function NewAppointmentModal({
       toast.success("Termin zakazan");
       onClose();
     } catch (err) {
-      if (err instanceof Error && err.message === "OVERLAP") {
-        toast.error("Termin se preklapa sa drugim terminom ovog doktora");
-      } else {
-        toast.error("Greška pri zakazivanju termina");
-      }
+      toast.error(appointmentErrorMessage(err, "Greška pri zakazivanju termina"));
     }
   }
 
@@ -226,6 +236,37 @@ export function NewAppointmentModal({
               )}
             />
 
+            {/* Stolica — prikazuje se samo ako ima više od jedne (inače auto) */}
+            {(chairs?.length ?? 0) > 1 && (
+              <FormField
+                control={form.control}
+                name="chair_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stolica</FormLabel>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Izaberite stolicu" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(chairs ?? []).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             {/* Usluga */}
             <FormField
               control={form.control}
@@ -285,9 +326,23 @@ export function NewAppointmentModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Vreme</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Vreme" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {getTimeSlots().map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,9 +1,16 @@
 import { z } from "zod";
 
+import {
+  fitsWithinWorkingHours,
+  getTimeSlots,
+  isWorkingDay,
+} from "@/lib/constants/workingHours";
+
 export const appointmentSchema = z
   .object({
     doctor_id: z.string().uuid("Izaberite doktora"),
     service_id: z.string().uuid().nullable(),
+    chair_id: z.string().uuid("Izaberite stolicu"),
     date: z.string().min(1, "Izaberite datum"), // YYYY-MM-DD
     time: z.string().min(1, "Izaberite vreme"), // HH:mm
     duration_minutes: z.number().min(5).max(480),
@@ -23,6 +30,25 @@ export const appointmentSchema = z
     {
       message: "Izaberite pacijenta ili unesite ime i telefon",
       path: ["patient_id"],
+    }
+  )
+  // Datum mora biti radni dan (Pon–Pet)
+  .refine((data) => !data.date || isWorkingDay(data.date), {
+    message: "Ordinacija ne radi vikendom",
+    path: ["date"],
+  })
+  // Vreme mora biti u okviru radnog vremena (09:00–14:30)
+  .refine((data) => !data.time || getTimeSlots().includes(data.time), {
+    message: "Vreme mora biti u okviru radnog vremena (09:00–14:30)",
+    path: ["time"],
+  })
+  // Termin (vreme + trajanje) ne sme da pređe kraj radnog vremena (15:00)
+  .refine(
+    (data) =>
+      !data.time || fitsWithinWorkingHours(data.time, data.duration_minutes),
+    {
+      message: "Termin bi se završio nakon radnog vremena (15:00)",
+      path: ["time"],
     }
   );
 

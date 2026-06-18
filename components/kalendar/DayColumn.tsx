@@ -36,10 +36,23 @@ export function DayColumn({
 
   return (
     <div
-      className="relative border-r border-venus-line last:border-r-0"
+      className="relative border-r border-venus-border last:border-r-0"
       style={{ height: totalSlots * slotHeight }}
     >
-      {/* Slot linije (puna na pun sat, slabija na pola sata) — klik otvara novi termin */}
+      {/* Horizontalne linije: pun sat jača (border), pola sata suptilna (line).
+          Crta se i početna (09:00) i završna (15:00) granica. */}
+      {Array.from({ length: totalSlots + 1 }).map((_, i) => (
+        <div
+          key={`line-${i}`}
+          className={cn(
+            "pointer-events-none absolute inset-x-0 h-px",
+            i % 2 === 0 ? "bg-venus-border" : "bg-venus-line"
+          )}
+          style={{ top: i * slotHeight }}
+        />
+      ))}
+
+      {/* Klikabilni slotovi (transparentni, preko linija) — klik otvara novi termin */}
       {Array.from({ length: totalSlots }).map((_, i) => {
         const totalMin = hoursStart * 60 + i * slotMin;
         const h = Math.floor(totalMin / 60);
@@ -56,16 +69,13 @@ export function DayColumn({
                 doctor_id: doctorFilter ?? undefined,
               })
             }
-            className={cn(
-              "block w-full border-b transition-colors hover:bg-[color-mix(in_srgb,var(--venus-gold)_8%,transparent)]",
-              i % 2 === 1 ? "border-venus-line" : "border-venus-border/40"
-            )}
-            style={{ height: slotHeight }}
+            className="absolute inset-x-0 transition-colors hover:bg-[color-mix(in_srgb,var(--venus-gold)_8%,transparent)]"
+            style={{ top: i * slotHeight, height: slotHeight }}
           />
         );
       })}
 
-      {/* Termini — apsolutno pozicionirani */}
+      {/* Termini — apsolutno pozicionirani preko grida */}
       {dayAppts.map((appt) => {
         const start = parseISO(appt.starts_at);
         const end = parseISO(appt.ends_at);

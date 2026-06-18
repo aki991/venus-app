@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Search, Settings, Plus, Sun, Moon, LogOut } from "lucide-react";
@@ -95,14 +96,16 @@ export function TopBar({ user }: { user: UserWithProfile }) {
 
       <ThemeToggle />
 
-      {/* Settings (samo UI) */}
-      <button
-        type="button"
-        aria-label="Podešavanja"
-        className="flex size-[38px] items-center justify-center rounded-lg text-venus-text-dim transition-colors hover:bg-venus-surface-2"
-      >
-        <Settings size={18} />
-      </button>
+      {/* Settings — vodi na admin panel, SAMO za admina */}
+      {user.role === "admin" && (
+        <Link
+          href="/podesavanja"
+          aria-label="Podešavanja"
+          className="flex size-[38px] items-center justify-center rounded-lg text-venus-text-dim transition-colors hover:bg-venus-surface-2"
+        >
+          <Settings size={18} />
+        </Link>
+      )}
 
       {/* User avatar + dropdown */}
       <DropdownMenu>
@@ -128,7 +131,11 @@ export function TopBar({ user }: { user: UserWithProfile }) {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Moj profil</DropdownMenuItem>
-          <DropdownMenuItem>Podešavanja</DropdownMenuItem>
+          {user.role === "admin" && (
+            <DropdownMenuItem asChild>
+              <Link href="/podesavanja">Podešavanja</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
@@ -146,11 +153,11 @@ export function TopBar({ user }: { user: UserWithProfile }) {
       <button
         type="button"
         onClick={() => openNew()}
-        className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#1a140a]"
+        className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0d0d0d]"
         style={{
           backgroundImage:
             "linear-gradient(180deg, var(--venus-gold-bright), var(--venus-gold))",
-          boxShadow: "0 4px 16px rgba(201, 162, 75, 0.4)",
+          boxShadow: "0 4px 16px rgba(229, 196, 95, 0.45)",
         }}
       >
         <Plus size={16} />

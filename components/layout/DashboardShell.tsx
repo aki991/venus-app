@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/uiStore";
 import { TopBar } from "@/components/layout/TopBar";
+import { AppointmentModals } from "@/components/kalendar/AppointmentModals";
 import type { UserWithProfile } from "@/lib/auth/get-user";
 
 export function DashboardShell({
@@ -23,6 +24,9 @@ export function DashboardShell({
     >
       <TopBar user={user} />
       <main className="flex-1">{children}</main>
+
+      {/* Modali termina — na layout nivou da rade na svim dashboard stranicama */}
+      <AppointmentModals />
     </div>
   );
 }

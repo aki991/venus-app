@@ -42,13 +42,14 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Venus dizajn tokeni (dark-first → default vrednosti su tamne) */
-  --venus-gold: #c9a24b;
-  --venus-gold-bright: #d4b465;
-  --venus-gold-dim: rgba(201, 162, 75, 0.4);
-  --venus-bg: #15130c;
-  --venus-surface: #1c1a13;
-  --venus-surface-2: #232017;
-  --venus-border: #2e2a20;
+  --venus-gold: #e5c45f;
+  --venus-gold-bright: #f2d885;
+  --venus-gold-dim: rgba(229, 196, 95, 0.4);
+  --venus-canvas: #000000; /* potpuno crno — kalendar i levi nav */
+  --venus-bg: #121212; /* svetlija nijansa crne — glavna pozadina */
+  --venus-surface: #1c1c1c; /* svetlija crna — kartice, top bar, modali */
+  --venus-surface-2: #282828; /* hover / izdignute površine */
+  --venus-border: #303030;
   --venus-line: rgba(255, 255, 255, 0.05);
   --venus-text: #f3efe7;
   --venus-text-dim: #b8b09e;
@@ -92,6 +93,7 @@
 
 /* Venus light tokeni — aktiviraju se kad je <html class="light"> */
 .light {
+  --venus-canvas: #ffffff;
   --venus-bg: #faf8f3;
   --venus-surface: #ffffff;
   --venus-surface-2: #f5f1e8;
@@ -145,6 +147,7 @@
   --color-venus-gold: var(--venus-gold);
   --color-venus-gold-bright: var(--venus-gold-bright);
   --color-venus-gold-dim: var(--venus-gold-dim);
+  --color-venus-canvas: var(--venus-canvas);
   --color-venus-bg: var(--venus-bg);
   --color-venus-surface: var(--venus-surface);
   --color-venus-surface-2: var(--venus-surface-2);

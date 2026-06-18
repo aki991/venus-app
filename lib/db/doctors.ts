@@ -17,7 +17,8 @@ export async function fetchDoctors(): Promise<DoctorListItem[]> {
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select("id, first_name, last_name, initials, color_hex, specialty, role")
-    .in("role", ["staff", "admin"]);
+    .in("role", ["staff", "admin"])
+    .eq("is_active", true); // deaktivirani doktori se ne nude za nove termine
 
   if (error) throw error;
   if (!profiles) return [];

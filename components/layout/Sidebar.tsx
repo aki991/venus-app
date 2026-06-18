@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { href: "/usluge", label: "Usluge", icon: Stethoscope, enabled: false },
 ];
 
-const DEFAULT_DOCTOR_COLOR = "#c9a24b";
+const DEFAULT_DOCTOR_COLOR = "#e5c45f";
 
 function doctorName(d: {
   first_name: string | null;
@@ -57,7 +57,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-venus-border bg-venus-surface transition-[width] duration-200 ease-in-out",
+        "fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-venus-border bg-venus-canvas transition-[width] duration-200 ease-in-out",
         collapsed ? "w-[70px]" : "w-[262px]"
       )}
     >
