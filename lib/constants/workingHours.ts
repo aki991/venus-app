@@ -3,10 +3,10 @@
 export const WORKING_HOURS = {
   start: 9, // 09:00
   end: 15, // 15:00
-  slotMinutes: 30, // granularnost slotova
+  slotMinutes: 15, // granularnost slotova
 } as const;
 
-// Generiše listu time stringova za dropdown: ['09:00', '09:30', ..., '14:30']
+// Generiše listu time stringova za dropdown: ['09:00', '09:15', ..., '14:45']
 // (poslednji slot počinje pre end-a da bi termin mogao da se završi do 15:00)
 export function getTimeSlots(
   slotMin: number = WORKING_HOURS.slotMinutes
@@ -18,6 +18,21 @@ export function getTimeSlots(
     }
   }
   return slots;
+}
+
+// Sklapa lokalni datum (YYYY-MM-DD) + vreme (HH:mm) u Date u LOKALNOJ zoni.
+// Komponente parsiramo ručno da izbegnemo UTC pomeranje koje pravi
+// new Date("YYYY-MM-DDTHH:mm") u nekim okruženjima.
+export function combineDateTime(dateStr: string, time: string): Date {
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  return new Date(y, mo - 1, d, h, mi, 0, 0);
+}
+
+// Današnji datum kao YYYY-MM-DD (lokalno) — za min= na date inputu i poređenja.
+export function todayDateStr(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 // Da li je dati datum (YYYY-MM-DD) radni dan (Pon–Pet)?

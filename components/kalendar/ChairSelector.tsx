@@ -21,8 +21,8 @@ export function ChairSelector() {
 
   if (chairs.length === 1) {
     return (
-      <div className="flex items-center gap-1.5 rounded-full border border-venus-border px-3 py-1 text-xs font-medium text-venus-text-dim">
-        <Armchair size={13} />
+      <div className="flex items-center gap-1.5 rounded-full border border-venus-border px-[14px] py-[5px] text-[14px] font-medium text-venus-text-dim">
+        <Armchair size={16} />
         {chairs[0].name}
       </div>
     );
@@ -36,13 +36,13 @@ export function ChairSelector() {
           type="button"
           onClick={() => setSelectedChairId(c.id)}
           className={cn(
-            "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            "flex items-center gap-1.5 rounded-full px-[14px] py-[5px] text-[14px] font-medium transition-colors",
             selectedChairId === c.id
               ? "bg-venus-gold text-[#0d0d0d]"
               : "text-venus-text-dim hover:text-venus-text"
           )}
         >
-          <Armchair size={13} />
+          <Armchair size={16} />
           {c.name}
         </button>
       ))}

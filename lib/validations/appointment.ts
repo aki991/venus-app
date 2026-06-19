@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  combineDateTime,
   fitsWithinWorkingHours,
   getTimeSlots,
   isWorkingDay,
@@ -48,6 +49,18 @@ export const appointmentSchema = z
       !data.time || fitsWithinWorkingHours(data.time, data.duration_minutes),
     {
       message: "Termin bi se završio nakon radnog vremena (15:00)",
+      path: ["time"],
+    }
+  )
+  // Termin ne sme da bude u prošlosti (web/osoblje). NEMA 1h limita —
+  // to je pravilo mobilne app za pacijente. Dozvoljeno je sve od sada nadalje.
+  .refine(
+    (data) => {
+      if (!data.date || !data.time) return true; // prazno pokrivaju druge provere
+      return combineDateTime(data.date, data.time).getTime() >= Date.now();
+    },
+    {
+      message: "Ne možete zakazati termin u prošlosti",
       path: ["time"],
     }
   );

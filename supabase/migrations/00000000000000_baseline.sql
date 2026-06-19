@@ -228,6 +228,79 @@ COMMENT ON FUNCTION "auth"."uid"() IS 'Deprecated. Use auth.jwt() -> ''sub'' ins
 
 
 
+CREATE OR REPLACE FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_caller_role text;
+BEGIN
+  SELECT role INTO v_caller_role FROM profiles WHERE id = auth.uid();
+  IF v_caller_role <> 'admin' THEN
+    RAISE EXCEPTION 'Samo admin';
+  END IF;
+
+  UPDATE profiles SET is_active = p_active, updated_at = now() WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Profil % ne postoji', p_id;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) IS 'Admin-gated soft delete/reaktivacija doktora.';
+
+
+
+CREATE OR REPLACE FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_caller_role text;
+BEGIN
+  -- Pozivalac mora biti admin
+  SELECT role::text INTO v_caller_role FROM profiles WHERE id = auth.uid();
+  IF v_caller_role <> 'admin' THEN
+    RAISE EXCEPTION 'Samo admin može da upravlja doktorima';
+  END IF;
+
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'p_id ne sme biti NULL';
+  END IF;
+
+  UPDATE profiles SET
+    first_name = p_first_name,
+    last_name  = p_last_name,
+    initials   = p_initials,
+    color_hex  = p_color_hex,
+    specialty  = p_specialty,
+    phone      = p_phone,
+    -- KLJUČNI FIX: kastuj string u user_role enum
+    role = (CASE WHEN role::text = 'admin' THEN 'admin' ELSE 'staff' END)::user_role,
+    updated_at = now()
+  WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Profil ne postoji';
+  END IF;
+
+  RETURN p_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") IS 'Admin-gated upsert doktor-polja + role=staff. p_id = postojeci auth/profile id (OPCIJA C).';
+
+
+
 CREATE OR REPLACE FUNCTION "public"."create_guest_appointment"("p_walk_in_name" "text", "p_walk_in_phone" "text", "p_service_id" "uuid", "p_starts_at" timestamp with time zone, "p_ends_at" timestamp with time zone) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
@@ -405,11 +478,9 @@ CREATE OR REPLACE FUNCTION "public"."is_staff"() RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-  select exists (
-    select 1
-    from public.profiles
-    where id = auth.uid()
-      and role in ('staff', 'admin')
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('admin', 'staff')
   );
 $$;
 
@@ -1050,6 +1121,8 @@ CREATE TABLE IF NOT EXISTS "public"."appointments" (
     "walk_in_name" "text",
     "walk_in_phone" "text",
     "admin_notes" "text",
+    "doctor_id" "uuid",
+    "chair_id" "uuid",
     CONSTRAINT "appointments_check" CHECK (("ends_at" > "starts_at")),
     CONSTRAINT "check_cancellation_fields" CHECK ((("status" <> 'cancelled'::"public"."appointment_status") OR (("cancelled_at" IS NOT NULL) AND ("cancelled_by" IS NOT NULL)))),
     CONSTRAINT "patient_or_walkin" CHECK ((("patient_id" IS NOT NULL) OR (("walk_in_name" IS NOT NULL) AND ("walk_in_phone" IS NOT NULL))))
@@ -1057,6 +1130,10 @@ CREATE TABLE IF NOT EXISTS "public"."appointments" (
 
 
 ALTER TABLE "public"."appointments" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."appointments"."chair_id" IS 'Stolica na kojoj se termin obavlja.';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."audit_log" (
@@ -1072,6 +1149,23 @@ CREATE TABLE IF NOT EXISTS "public"."audit_log" (
 
 
 ALTER TABLE "public"."audit_log" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."chairs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "display_order" integer DEFAULT 0 NOT NULL,
+    "is_active" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."chairs" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."chairs" IS 'Fizičke radne jedinice (stolice) ordinacije.';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."notifications" (
@@ -1097,11 +1191,19 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "first_name" "text",
-    "last_name" "text"
+    "last_name" "text",
+    "initials" "text",
+    "color_hex" "text",
+    "specialty" "text",
+    "is_active" boolean DEFAULT true NOT NULL
 );
 
 
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."profiles"."is_active" IS 'Aktivnost doktora/staff-a (soft delete u admin panelu).';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."push_tokens" (
@@ -1345,7 +1447,12 @@ ALTER TABLE ONLY "public"."ai_conversations"
 
 
 ALTER TABLE ONLY "public"."appointments"
-    ADD CONSTRAINT "appointments_no_overlap" EXCLUDE USING "gist" ("tstzrange"("starts_at", "ends_at", '[)'::"text") WITH &&) WHERE (("status" = ANY (ARRAY['pending'::"public"."appointment_status", 'confirmed'::"public"."appointment_status"])));
+    ADD CONSTRAINT "appointments_no_overlap" EXCLUDE USING "gist" (COALESCE("doctor_id", '00000000-0000-0000-0000-000000000000'::"uuid") WITH =, "tstzrange"("starts_at", "ends_at", '[)'::"text") WITH &&) WHERE (("status" = ANY (ARRAY['confirmed'::"public"."appointment_status", 'pending'::"public"."appointment_status"])));
+
+
+
+ALTER TABLE ONLY "public"."appointments"
+    ADD CONSTRAINT "appointments_no_overlap_chair" EXCLUDE USING "gist" ("chair_id" WITH =, "tstzrange"("starts_at", "ends_at", '[)'::"text") WITH &&) WHERE ((("status" = ANY (ARRAY['confirmed'::"public"."appointment_status", 'pending'::"public"."appointment_status"])) AND ("chair_id" IS NOT NULL)));
 
 
 
@@ -1356,6 +1463,11 @@ ALTER TABLE ONLY "public"."appointments"
 
 ALTER TABLE ONLY "public"."audit_log"
     ADD CONSTRAINT "audit_log_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."chairs"
+    ADD CONSTRAINT "chairs_pkey" PRIMARY KEY ("id");
 
 
 
@@ -1639,6 +1751,14 @@ CREATE INDEX "webauthn_credentials_user_id_idx" ON "auth"."webauthn_credentials"
 
 
 
+CREATE INDEX "appointments_chair_starts_idx" ON "public"."appointments" USING "btree" ("chair_id", "starts_at");
+
+
+
+CREATE INDEX "appointments_doctor_starts_idx" ON "public"."appointments" USING "btree" ("doctor_id", "starts_at");
+
+
+
 CREATE INDEX "appointments_patient_idx" ON "public"."appointments" USING "btree" ("patient_id");
 
 
@@ -1676,6 +1796,10 @@ CREATE INDEX "notifications_unread_idx" ON "public"."notifications" USING "btree
 
 
 CREATE INDEX "notifications_user_idx" ON "public"."notifications" USING "btree" ("user_id", "created_at" DESC);
+
+
+
+CREATE INDEX "profiles_role_active_idx" ON "public"."profiles" USING "btree" ("role", "is_active");
 
 
 
@@ -1818,7 +1942,17 @@ ALTER TABLE ONLY "auth"."webauthn_credentials"
 
 
 ALTER TABLE ONLY "public"."appointments"
+    ADD CONSTRAINT "appointments_chair_id_fkey" FOREIGN KEY ("chair_id") REFERENCES "public"."chairs"("id") ON DELETE RESTRICT;
+
+
+
+ALTER TABLE ONLY "public"."appointments"
     ADD CONSTRAINT "appointments_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."appointments"
+    ADD CONSTRAINT "appointments_doctor_id_fkey" FOREIGN KEY ("doctor_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
 
 
 
@@ -1940,6 +2074,22 @@ CREATE POLICY "Service role full access" ON "public"."ai_conversations" USING ((
 
 
 
+CREATE POLICY "Staff full access appointments" ON "public"."appointments" TO "authenticated" USING ("public"."is_staff"()) WITH CHECK ("public"."is_staff"());
+
+
+
+CREATE POLICY "Staff read services" ON "public"."services" FOR SELECT TO "authenticated" USING ("public"."is_staff"());
+
+
+
+CREATE POLICY "admin_manage_chairs" ON "public"."chairs" TO "authenticated" USING ((( SELECT "profiles"."role"
+   FROM "public"."profiles"
+  WHERE ("profiles"."id" = "auth"."uid"())) = 'admin'::"public"."user_role")) WITH CHECK ((( SELECT "profiles"."role"
+   FROM "public"."profiles"
+  WHERE ("profiles"."id" = "auth"."uid"())) = 'admin'::"public"."user_role"));
+
+
+
 ALTER TABLE "public"."ai_conversations" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1971,6 +2121,9 @@ ALTER TABLE "public"."audit_log" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "audit_log_select_admin" ON "public"."audit_log" FOR SELECT TO "authenticated" USING ("public"."is_admin"());
 
+
+
+ALTER TABLE "public"."chairs" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
@@ -2033,6 +2186,14 @@ CREATE POLICY "services_select" ON "public"."services" FOR SELECT TO "authentica
 
 
 
+CREATE POLICY "staff_read_all_profiles" ON "public"."profiles" FOR SELECT TO "authenticated" USING ("public"."is_staff"());
+
+
+
+CREATE POLICY "staff_read_chairs" ON "public"."chairs" FOR SELECT TO "authenticated" USING ("public"."is_staff"());
+
+
+
 ALTER TABLE "public"."time_off" ENABLE ROW LEVEL SECURITY;
 
 
@@ -2085,6 +2246,18 @@ GRANT ALL ON FUNCTION "auth"."role"() TO "dashboard_user";
 
 
 GRANT ALL ON FUNCTION "auth"."uid"() TO "dashboard_user";
+
+
+
+GRANT ALL ON FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) TO "anon";
+GRANT ALL ON FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."admin_set_doctor_active"("p_id" "uuid", "p_active" boolean) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."admin_upsert_doctor"("p_id" "uuid", "p_first_name" "text", "p_last_name" "text", "p_initials" "text", "p_color_hex" "text", "p_specialty" "text", "p_phone" "text") TO "service_role";
 
 
 
@@ -2298,6 +2471,12 @@ GRANT ALL ON TABLE "public"."appointments" TO "service_role";
 GRANT ALL ON TABLE "public"."audit_log" TO "anon";
 GRANT ALL ON TABLE "public"."audit_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."audit_log" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."chairs" TO "anon";
+GRANT ALL ON TABLE "public"."chairs" TO "authenticated";
+GRANT ALL ON TABLE "public"."chairs" TO "service_role";
 
 
 

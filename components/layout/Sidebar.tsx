@@ -87,7 +87,7 @@ export function Sidebar() {
             >
               <Icon size={18} className="shrink-0" />
               {!collapsed && (
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-[17px] font-medium">{item.label}</span>
               )}
             </div>
           );
@@ -117,7 +117,7 @@ export function Sidebar() {
         <div className="flex-1" />
       ) : (
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          <h3 className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-venus-text-faint">
+          <h3 className="px-2 pb-2 text-[16px] font-semibold uppercase tracking-[0.15em] text-venus-text-dim">
             Tim ordinacije
           </h3>
           <div className="flex flex-col gap-1">
@@ -132,8 +132,8 @@ export function Sidebar() {
                   : "text-venus-text-dim hover:bg-venus-surface-2"
               )}
             >
-              <span className="size-2 shrink-0 rounded-full bg-venus-text-faint" />
-              <span className="text-[12px]">Svi doktori</span>
+              <span className="size-2.5 shrink-0 rounded-full bg-venus-text-faint" />
+              <span className="text-[17px]">Svi doktori</span>
             </button>
 
             {isLoading &&
@@ -163,12 +163,12 @@ export function Sidebar() {
                   )}
                 >
                   <span
-                    className="size-2 shrink-0 rounded-full"
+                    className="size-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: color }}
                   />
                   <span
                     className={cn(
-                      "truncate text-[12px]",
+                      "truncate text-[17px]",
                       active ? "text-venus-gold" : "text-venus-text"
                     )}
                   >
@@ -199,7 +199,7 @@ export function Sidebar() {
               collapsed && "rotate-180"
             )}
           />
-          {!collapsed && <span className="text-sm">Skupi meni</span>}
+          {!collapsed && <span className="text-[17px]">Skupi meni</span>}
         </button>
       </div>
     </aside>

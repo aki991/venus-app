@@ -10,8 +10,9 @@ import type { AppointmentWithRelations } from "@/lib/db/appointments";
 
 const HOURS_START = WORKING_HOURS.start; // 09:00
 const HOURS_END = WORKING_HOURS.end; // 15:00
-const SLOT_MIN = WORKING_HOURS.slotMinutes; // 30
-const SLOT_HEIGHT = 52; // grid je 6h/12 slotova — veći slot da termini dišu
+const SLOT_MIN = WORKING_HOURS.slotMinutes; // 15
+// 15-min slot. 30-min termin = 2 slota (56px), 45-min = 3, 60-min = 4.
+const SLOT_HEIGHT = 28;
 const WORK_DAYS = 5; // Pon–Pet (ordinacija ne radi vikendom)
 
 // PON, UTO, SRE, ČET, PET — vikend se ne prikazuje
@@ -23,6 +24,9 @@ export function WeekView({
   appointments: AppointmentWithRelations[];
 }) {
   const selectedDate = useKalendarStore((s) => s.selectedDate);
+  // "Sada" uzimamo jednom na nivou WeekView i prosleđujemo kolonama — da se
+  // detekcija prošlih slotova ne preračunava nezavisno po svakom slotu.
+  const now = new Date();
   // startOfWeek i dalje računa od ponedeljka; renderujemo samo prvih 5 dana.
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const days = Array.from({ length: WORK_DAYS }, (_, i) => addDays(weekStart, i));
@@ -107,6 +111,7 @@ export function WeekView({
           <DayColumn
             key={idx}
             day={day}
+            now={now}
             appointments={appointments}
             totalSlots={totalSlots}
             slotHeight={SLOT_HEIGHT}

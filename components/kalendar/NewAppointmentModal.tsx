@@ -18,7 +18,11 @@ import { useChairs } from "@/hooks/useChairs";
 import { useCreateAppointment } from "@/hooks/useAppointmentMutations";
 import type { NewAppointmentDefaults } from "@/stores/appointmentModalStore";
 import { useKalendarStore } from "@/stores/kalendarStore";
-import { getTimeSlots } from "@/lib/constants/workingHours";
+import {
+  combineDateTime,
+  getTimeSlots,
+  todayDateStr,
+} from "@/lib/constants/workingHours";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -115,6 +119,14 @@ export function NewAppointmentModal({
   }, [isOpen, defaultValues]);
 
   const patientMode = form.watch("patient_mode");
+
+  // Zabrana prošlosti (web/osoblje, BEZ 1h pravila — to je mobilna app).
+  // min na date inputu sprečava biranje prošlih datuma; kad je izabran DANAS
+  // prošli time slotovi se disable-uju u dropdownu. Budući datum → sve dostupno.
+  const now = new Date();
+  const today = todayDateStr(now);
+  const selectedDate = form.watch("date");
+  const isToday = selectedDate === today;
 
   async function onSubmit(values: AppointmentFormInput) {
     const startsAt = toISO(values.date, values.time);
@@ -314,7 +326,7 @@ export function NewAppointmentModal({
                   <FormItem>
                     <FormLabel>Datum</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" min={today} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -336,11 +348,19 @@ export function NewAppointmentModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {getTimeSlots().map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
-                          </SelectItem>
-                        ))}
+                        {getTimeSlots().map((t) => {
+                          // Samo kad je izabran DANAS gledamo prošlost; za
+                          // budući datum su svi slotovi dostupni.
+                          const isPast =
+                            isToday &&
+                            combineDateTime(selectedDate, t).getTime() <
+                              now.getTime();
+                          return (
+                            <SelectItem key={t} value={t} disabled={isPast}>
+                              {t}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />

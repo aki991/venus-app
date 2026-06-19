@@ -41,32 +41,61 @@ export function AppointmentBlock({
   return (
     <button
       type="button"
+      data-appointment
       onClick={(e) => {
         e.stopPropagation();
         openDetail(appointment);
       }}
       style={{
         ...style,
-        // dashed leva ivica razlikuje 'pending' od ostalih statusa
-        borderLeft: `3px ${isPending ? "dashed" : "solid"} ${color}`,
-        // no_show: blago zasivljena pozadina; ostali: čista boja doktora
-        backgroundColor: isNoShow
-          ? `color-mix(in srgb, ${color} 9%, rgba(130, 130, 130, 0.12))`
-          : `color-mix(in srgb, ${color} 14%, transparent)`,
+        // Tanak border oko celog bloka (pending = dashed cue) razdvaja susedne
+        // termine sličnih boja, PLUS deblja leva ivica = accent traka u boji
+        // doktora. borderLeft posle shorthand-a override-uje samo levu stranu.
+        border: `1.5px ${isPending ? "dashed" : "solid"} ${color}`,
+        borderLeft: `5px solid ${color}`,
+        // Neprozirna kartica: solidna surface pozadina + poluprozirni tint boje
+        // doktora preko nje (gradient sloj). Tako se zadrži boja doktora, a
+        // linije grida ne prosijavaju kroz blok niti seku tekst.
+        // no_show: blago zasivljeni tint; ostali: tint boje doktora.
+        background: `linear-gradient(0deg, ${
+          isNoShow
+            ? `color-mix(in srgb, ${color} 9%, rgba(130, 130, 130, 0.12))`
+            : `color-mix(in srgb, ${color} 14%, transparent)`
+        }, ${
+          isNoShow
+            ? `color-mix(in srgb, ${color} 9%, rgba(130, 130, 130, 0.12))`
+            : `color-mix(in srgb, ${color} 14%, transparent)`
+        }), var(--venus-surface)`,
       }}
       className={cn(
-        "absolute left-1 right-1 overflow-hidden rounded-md px-2 py-1 text-left text-venus-text transition-opacity hover:opacity-100",
+        "absolute left-1 right-1 z-10 flex items-start justify-between gap-1.5 overflow-hidden rounded-md px-1.5 py-0.5 text-left text-venus-text transition-opacity hover:opacity-100",
         // prigušenje: pending (čeka), completed (gotovo), no_show (nije došao)
         isPending && "opacity-65",
         (isCompleted || isNoShow) && "opacity-75"
       )}
     >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-[10px] font-semibold" style={{ color }}>
-          {appointment.doctor?.initials ?? "—"}
-        </span>
+      {/* Leva kolona: pacijent (bold, najistaknutiji) + usluga ispod */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[17px] font-semibold leading-tight">
+          {patientName || "—"}
+        </p>
+        {appointment.service?.name && (
+          <p
+            className={cn(
+              "truncate text-[14px] leading-tight text-venus-text-dim",
+              // suptilan strikethrough za završene termine
+              isCompleted && "line-through decoration-1"
+            )}
+          >
+            {appointment.service.name}
+          </p>
+        )}
+      </div>
+
+      {/* Desna kolona: vreme (bold) + inicijali doktora ispod */}
+      <div className="flex shrink-0 flex-col items-end">
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-venus-text-dim">
+          <span className="text-[14px] font-semibold text-venus-text-dim">
             {format(parseISO(appointment.starts_at), "HH:mm")}
           </span>
           {showStatusIcon && (
@@ -78,23 +107,10 @@ export function AppointmentBlock({
             />
           )}
         </div>
+        <span className="text-[13px] font-semibold" style={{ color }}>
+          {appointment.doctor?.initials ?? "—"}
+        </span>
       </div>
-      {appointment.service?.name && (
-        <p
-          className={cn(
-            "truncate text-[11px] font-medium leading-tight",
-            // suptilan strikethrough za završene termine
-            isCompleted && "line-through decoration-1"
-          )}
-        >
-          {appointment.service.name}
-        </p>
-      )}
-      {patientName && (
-        <p className="truncate text-[10px] text-venus-text-dim">
-          {patientName}
-        </p>
-      )}
     </button>
   );
 }

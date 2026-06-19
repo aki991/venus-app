@@ -1,371 +1,199 @@
 # Venus Web — Supabase Schema
 
-Kompletna referenca za stanje baze, plus migracije koje moramo dodati za
-multi-doctor support i web aplikaciju.
+**Single source of truth = živa baza.** Ovaj dokument odražava tačno stanje
+uhvaćeno u `supabase/migrations/00000000000000_baseline.sql` (dump `public` +
+`auth` šeme od **2026-06-19**).
 
-> **Single source of truth** za schemu treba da bude live baza. Pre nego što
-> krenemo bilo šta, **dump-uj baseline** (vidi sekciju "Baseline schema dump").
-
----
-
-## TL;DR — šta postoji, šta nedostaje
-
-### ✅ Postoji
-- Tabele: `profiles`, `services`, `appointments`, `working_hours`, `time_off`, `push_tokens`, `notifications`, `audit_log`, `ai_conversations`
-- RLS za `patient` i `admin` role
-- RPC funkcije: `get_user_email`, `reorder_services`, `delete_service`, `create_guest_appointment`
-- Trigger `handle_new_user` (auto-create profile posle `auth.signUp`) — postoji u bazi, **NIJE u repu**
-- CHECK constraints: `check_cancellation_fields`, `patient_or_walkin`
-
-### ❌ Nedostaje za web app
-- `doctor_id` u `appointments` (single-doctor model)
-- `doctor` i `assistant` u `profiles.role`
-- Polja za doktor UI: `initials`, `color_hex`, `specialty`
-- RLS politike za `doctor`/`assistant` role
-- Tabela za **dnevnik pacijenata** (kartoni, anamneza, alergije) — Faza 2
-- Tabela za **odontogram stanje** — Faza 2
-- Tabela za **protokol Dg/Th** (intervencije) — Faza 2
-- Tabela za **invoices** — Faza 3
-- Storage bucket za **RTG snimke** — Faza 4
-
-### 🐛 Bugovi koje treba popraviti
-- **EXCLUDE constraint za anti-overlap je zakomentarisan** — double-booking je moguć za authenticated pacijente
-- **RLS konflikt 005 vs 007** — `patient` ne vidi tuđe slotove → mobilna app može da dozvoli rezervaciju zauzetog termina (klijent zavisi od `error.code === '23P01'` koji se nikad ne aktivira)
-- **`profiles.email` možda nije sinhronizovan** sa `auth.users.email` (zato i postoji RPC `get_user_email`)
+Stare međumigracije (multi-doctor, staff RLS, chairs, admin panel) su ugrađene u
+baseline i premeštene u `supabase/migrations/_archive/` (vidi README tamo).
 
 ---
 
-## Baseline schema dump (URADI PRVO)
+## Enumi (`public`)
 
-Migracije 001 i 002 ne postoje u mobilnom repu. Pre svega ostalog, dump-uj
-postojeće stanje iz live baze:
+| Enum | Vrednosti |
+|---|---|
+| `user_role` | `patient`, `staff`, `admin` |
+| `appointment_status` | `pending`, `confirmed`, `cancelled`, `completed`, `no_show` |
+| `device_platform` | `ios`, `android`, `web` |
+| `notification_type` | `appointment_reminder`, `appointment_confirmed`, `appointment_cancelled`, `general` |
 
-```bash
-# Iz root-a postojećeg mobilnog repa, ili bilo gde gde imaš supabase CLI:
-npx supabase db dump \
-  --project-id <YOUR_PROJECT_ID> \
-  --schema public,auth \
-  --schema-only \
-  > schema_baseline.sql
-
-# Ako tražiš i podatke (samo za lokalni dev):
-npx supabase db dump \
-  --project-id <YOUR_PROJECT_ID> \
-  --schema public \
-  --data-only \
-  > seed_baseline.sql
-```
-
-Ovaj `schema_baseline.sql` ide u **`supabase/migrations/00000000000000_baseline.sql`**
-u web repu — postaje prva migracija koja odražava trenutno stanje.
+> Ranija dokumentacija je navodila `doctor`/`assistant` role — **to je bila
+> greška**. Živa baza ima samo `patient` / `staff` / `admin`. Razlika
+> doktor-vs-asistent se izražava kroz `profiles.specialty`, ne kroz rolu.
 
 ---
 
-## Postojeće tabele (rekonstrukcija iz audit-a)
+## Tabele (`public`) — 10
 
 ### `profiles` (1:1 sa `auth.users`)
-
-```sql
-CREATE TABLE profiles (
-  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email text,                           -- nepouzdano, prava vrednost u auth.users
-  first_name text,
-  last_name text,
-  phone text,
-  date_of_birth date,
-  role text NOT NULL DEFAULT 'patient', -- 'patient' | 'admin' (TEXT, ne enum)
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-```
-
-**Trigger (u bazi, NIJE u repu):**
-```sql
-CREATE FUNCTION handle_new_user() RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, first_name, last_name, role)
-  VALUES (
-    NEW.id,
-    NEW.raw_user_meta_data->>'first_name',
-    NEW.raw_user_meta_data->>'last_name',
-    'patient'
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
-```
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | FK → `auth.users(id)` ON DELETE CASCADE |
+| `role` | `user_role` | NOT NULL, default `patient` |
+| `phone` | text | |
+| `date_of_birth` | date | |
+| `first_name` | text | |
+| `last_name` | text | |
+| `initials` | text | inicijali doktora (UI) |
+| `color_hex` | text | boja doktora u kalendaru |
+| `specialty` | text | specijalnost (razlikuje doktora od asistenta) |
+| `is_active` | boolean | NOT NULL default true — soft delete u admin panelu |
+| `created_at` / `updated_at` | timestamptz | NOT NULL default now() |
 
 ### `appointments`
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | default `uuid_generate_v4()` |
+| `patient_id` | uuid | FK → profiles, nullable (walk-in) |
+| `service_id` | uuid | FK → services, nullable |
+| `doctor_id` | uuid | FK → profiles, nullable |
+| `chair_id` | uuid | FK → chairs, nullable |
+| `starts_at` / `ends_at` | timestamptz | NOT NULL |
+| `status` | `appointment_status` | NOT NULL default `pending` |
+| `notes` / `admin_notes` | text | |
+| `created_by` | uuid | FK → profiles |
+| `cancelled_at` | timestamptz | |
+| `cancelled_by` | uuid | |
+| `cancellation_reason` | text | |
+| `walk_in_name` / `walk_in_phone` | text | za walk-in (bez patient_id) |
+| `created_at` / `updated_at` | timestamptz | NOT NULL default now() |
 
-```sql
-CREATE TABLE appointments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id uuid REFERENCES profiles(id),     -- nullable za walk-in
-  service_id uuid REFERENCES services(id),     -- nullable da bi se očuvala istorija ako se servis obriše
-  starts_at timestamptz NOT NULL,
-  ends_at timestamptz NOT NULL,
-  status text NOT NULL,                        -- 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
-  notes text,
-  created_by uuid REFERENCES profiles(id),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  cancelled_at timestamptz,
-  cancelled_by uuid REFERENCES profiles(id),
-  cancellation_reason text,
-  walk_in_name text,
-  walk_in_phone text,
-  admin_notes text,
+**CHECK constraint-i:**
+- `appointments_check`: `ends_at > starts_at`
+- `check_cancellation_fields`: ako je `status = 'cancelled'` → `cancelled_at` i `cancelled_by` moraju biti popunjeni
+- `patient_or_walkin`: `patient_id` NOT NULL **ili** (`walk_in_name` i `walk_in_phone` NOT NULL)
 
-  CONSTRAINT check_cancellation_fields CHECK (
-    status != 'cancelled' OR (cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL)
-  ),
-  CONSTRAINT patient_or_walkin CHECK (
-    patient_id IS NOT NULL OR (walk_in_name IS NOT NULL AND walk_in_phone IS NOT NULL)
-  )
-);
-```
+**Dual overlap constraint (EXCLUDE USING gist, zahteva `btree_gist`):**
+- `appointments_no_overlap` — po **doktoru**: `COALESCE(doctor_id, '0000…') WITH =`, `tstzrange(starts_at, ends_at, '[)') WITH &&`, `WHERE status IN ('confirmed','pending')`
+- `appointments_no_overlap_chair` — po **stolici**: `chair_id WITH =`, isti tstzrange, `WHERE status IN ('confirmed','pending') AND chair_id IS NOT NULL`
 
-**⚠️ EXCLUDE constraint za anti-overlap je ZAKOMENTARISAN** u
-`004_booking_seed_and_rls.sql`. Treba aktivirati (vidi migraciju
-`20250101_add_appointment_overlap_constraint.sql` u sledećoj sekciji).
+### `chairs`
+Fizičke radne jedinice (stolice) ordinacije.
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | default `gen_random_uuid()` |
+| `name` | text | NOT NULL |
+| `display_order` | integer | NOT NULL default 0 |
+| `is_active` | boolean | NOT NULL default true |
+| `created_at` / `updated_at` | timestamptz | NOT NULL default now() |
 
 ### `services`
-
-```sql
-CREATE TABLE services (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  description text,
-  category text NOT NULL DEFAULT 'Ostalo',
-  duration_minutes integer NOT NULL,
-  price numeric,
-  is_active boolean NOT NULL DEFAULT true,
-  display_order integer NOT NULL DEFAULT 9999,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-```
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | |
+| `name` | text | NOT NULL |
+| `description` | text | |
+| `category` | text | NOT NULL default `Ostalo` |
+| `duration_minutes` | integer | NOT NULL, CHECK `> 0` |
+| `price` | numeric(10,2) | CHECK NULL ili `>= 0` |
+| `is_active` | boolean | NOT NULL default true |
+| `display_order` | integer | NOT NULL default 0 |
+| `created_at` / `updated_at` | timestamptz | NOT NULL default now() |
 
 ### `working_hours`
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | |
+| `day_of_week` | smallint | NOT NULL UNIQUE, CHECK 0–6 |
+| `opens_at` / `closes_at` | time | |
+| `is_closed` | boolean | NOT NULL default false |
+| `created_at` / `updated_at` | timestamptz | |
 
-```sql
-CREATE TABLE working_hours (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  day_of_week smallint NOT NULL UNIQUE,       -- 0=ned, 6=sub
-  opens_at time,
-  closes_at time,
-  is_closed boolean NOT NULL DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-```
-
-Trenutni seed: Pon–Pet 09:00–15:00, Sub i Ned zatvoreno. **Globalno radno
-vreme (ne per-doktor)** — zadržavamo to za sada.
+CHECK `working_hours_check`: `is_closed = true` **ili** (`opens_at` < `closes_at`, oba NOT NULL).
 
 ### `time_off`
-
-```sql
-CREATE TABLE time_off (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text NOT NULL,
-  start_date date NOT NULL,
-  end_date date NOT NULL,
-  start_time time,
-  end_time time,
-  reason text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-```
+| Kolona | Tip | Napomena |
+|---|---|---|
+| `id` | uuid PK | |
+| `title` | text | NOT NULL |
+| `start_date` / `end_date` | date | NOT NULL, CHECK `start_date <= end_date` |
+| `start_time` / `end_time` | time | CHECK: oba NULL ili oba NOT NULL sa `start_time < end_time` |
+| `reason` | text | |
+| `created_at` / `updated_at` | timestamptz | |
 
 ### `push_tokens`
-
-```sql
-CREATE TABLE push_tokens (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  token text NOT NULL,
-  platform text NOT NULL,                     -- 'ios' | 'android'
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, token)
-);
-```
+`id`, `user_id` (FK→profiles CASCADE), `token` (UNIQUE), `platform` (`device_platform`), `created_at`/`updated_at`.
 
 ### `notifications`
-
-```sql
-CREATE TABLE notifications (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  appointment_id uuid REFERENCES appointments(id) ON DELETE SET NULL,
-  type text NOT NULL,                         -- 'booking_confirmed' | 'appointment_reminder' | ...
-  title text NOT NULL,
-  body text,
-  data jsonb NOT NULL DEFAULT '{}',
-  scheduled_for timestamptz,
-  sent_at timestamptz,
-  read_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-```
+`id`, `user_id` (FK→profiles CASCADE), `type` (`notification_type` default `general`), `title`, `body`, `data` jsonb, `read_at`, `created_at`.
 
 ### `audit_log`
-
-```sql
-CREATE TABLE audit_log (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  actor_id uuid REFERENCES profiles(id),
-  action text NOT NULL,                       -- 'create' | 'update' | 'delete'
-  entity_type text NOT NULL,                  -- 'appointment' | 'patient' | ...
-  entity_id uuid,
-  old_data jsonb,
-  new_data jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-```
+`id`, `actor_id` (FK→profiles SET NULL), `action`, `entity_type`, `entity_id`, `old_data`/`new_data` jsonb, `created_at`.
 
 ### `ai_conversations`
-
-```sql
-CREATE TABLE ai_conversations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_phone text NOT NULL,
-  role text NOT NULL,
-  message text NOT NULL,
-  metadata jsonb,
-  created_at timestamptz DEFAULT now()
-);
-```
-
-> Audit kaže da AI integracija nije aktivna u mobilnoj. Tabela postoji, ali se
-> ne piše u nju iz mobilne app-a. Za web — ignorišemo dok ne shvatimo namenu.
+`id`, `user_phone`, `role` (CHECK `user`/`assistant`/`system`), `message`, `metadata` jsonb, `created_at`. (Nije aktivno u web app-u.)
 
 ---
 
-## Postojeće RLS politike
+## Foreign keys (`public`) — ON DELETE ponašanje
 
-Postavljene su za **`patient`** i **`admin`** role. Pacijent vidi/menja samo
-svoje, admin može sve. Anon vidi `services` (aktivne), `working_hours`,
-`time_off` i confirmed/pending `appointments` (za guest booking).
-
-Sve detaljno u `migrations/` foldera mobilnog repa, ali ključne za web:
-
-```sql
--- appointments
-CREATE POLICY "Admins can do everything on appointments"
-  ON appointments FOR ALL TO authenticated
-  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin')
-  WITH CHECK ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin');
-
--- profiles
-CREATE POLICY "Admins can read all profiles"
-  ON profiles FOR SELECT TO authenticated
-  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin');
-```
-
-**⚠️ Problem:** ove politike koriste `role = 'admin'` literal. Kada dodamo
-`doctor` i `assistant`, moramo ažurirati sve ove politike da prepoznaju i njih.
-Vidi migracije u sledećoj sekciji.
+| FK | Referencira | ON DELETE |
+|---|---|---|
+| `appointments.chair_id` | chairs | RESTRICT |
+| `appointments.created_by` | profiles | SET NULL |
+| `appointments.doctor_id` | profiles | SET NULL |
+| `appointments.patient_id` | profiles | CASCADE |
+| `appointments.service_id` | services | RESTRICT |
+| `audit_log.actor_id` | profiles | SET NULL |
+| `notifications.user_id` | profiles | CASCADE |
+| `profiles.id` | auth.users | CASCADE |
+| `push_tokens.user_id` | profiles | CASCADE |
 
 ---
 
-## Nove migracije koje moramo dodati
+## Funkcije (`public`)
 
-Sve migracije idu u **`supabase/migrations/`** (NE `migrations/` kao u mobilnoj!)
-sa **timestamp format** imenima.
-
-### 1. `20250101000001_multi_doctor_support.sql`
-
-**Sadržaj fajla je u repu — kreira ga prva sesija Claude Code-a.**
-
-Šta radi:
-- Dodaje `'doctor'` i `'assistant'` kao validne vrednosti u `profiles.role` (CHECK constraint)
-- Dodaje kolone u `profiles`: `initials text`, `color_hex text`, `specialty text`
-- Dodaje `doctor_id uuid REFERENCES profiles(id)` u `appointments` (NULLABLE)
-- Dodaje `appointments_doctor_starts_idx` index
-- Ažurira sve RLS politike sa `role = 'admin'` da prepoznaju i `doctor`/`assistant`:
-  - `appointments`: novi policy "Staff can do everything"
-  - `profiles`: novi policy "Staff can read all profiles"
-  - `services`: dozvoli `doctor`/`assistant` da čitaju sve (ne samo aktivne)
-  - `audit_log`: novi policy da staff vidi sve
-
-### 2. `20250101000002_appointment_overlap_constraint.sql`
-
-- Aktivira **EXCLUDE USING gist** constraint za anti-double-booking
-- Ali samo za `status IN ('confirmed', 'pending')` (otkazani termini smeju da se preklapaju)
-- Treba `btree_gist` extension: `CREATE EXTENSION IF NOT EXISTS btree_gist;`
-
-```sql
-ALTER TABLE appointments
-  ADD CONSTRAINT no_overlapping_appointments
-  EXCLUDE USING gist (
-    doctor_id WITH =,
-    tstzrange(starts_at, ends_at, '[)') WITH &&
-  ) WHERE (status IN ('confirmed', 'pending'));
-```
-
-> **Pažnja:** kada se ovo aktivira, mobilna app će početi da dobija greške na
-> double-booking pokušajima — što je željeno ponašanje. Kod u
-> `ConfirmationScreen.tsx` već handluje `error.code === '23P01'`.
-
-### 3. `20250101000003_fix_patient_select_appointments.sql`
-
-Rešava bug iz audit-a tačka 1 — pacijent treba da vidi **zauzete slotove**
-drugih pacijenata (samo `starts_at`/`ends_at`/`status`, ne sve podatke) da bi
-mogao da bira slobodne termine.
-
-Strategija: napraviti **VIEW** `appointment_slots` koji vraća samo nužne
-kolone i RLS za anonimni read pristup, ili koristiti SECURITY DEFINER funkciju
-`get_taken_slots(date)`. **Treba diskutovati pre nego što kodiramo** — može
-da utiče na mobilnu performansu.
-
-### 4. `20250101000004_audit_log_triggers.sql` (kasnije, ne MVP)
-
-Trigger-i za auto-popunjavanje `audit_log` na `INSERT/UPDATE/DELETE` po
-tabelama: `appointments`, `profiles`, `services`. Ne MVP, ali važno za GDPR.
+| Funkcija | Tip | Svrha |
+|---|---|---|
+| `current_user_role()` | sql STABLE, SECDEF | vraća `role::text` za `auth.uid()` |
+| `is_staff()` | sql STABLE, SECDEF | true ako je role ∈ {admin, staff} |
+| `is_admin()` | sql STABLE, SECDEF | true ako je role = admin |
+| `handle_new_user()` | trigger, SECDEF | auto-kreira `profiles` red posle `auth.signUp` (čita raw_user_meta_data) |
+| `prevent_role_self_elevation()` | trigger, SECDEF | blokira promenu `role` osim ako je pozivalac admin |
+| `set_updated_at()` | trigger | postavlja `updated_at = now()` |
+| `admin_upsert_doctor(...)` | plpgsql, SECDEF | admin-gated upsert doktor-polja; kastuje rolu u `user_role` (enum cast fix) |
+| `admin_set_doctor_active(p_id, p_active)` | plpgsql, SECDEF | admin-gated soft delete/reaktivacija doktora |
+| `create_guest_appointment(...)` | plpgsql, SECDEF | guest/walk-in booking (validacija + overlap check) |
+| `delete_service(uuid)` | plpgsql, SECDEF | admin-gated brisanje usluge (blokira ako ima budućih termina) |
+| `reorder_services(jsonb)` | plpgsql, SECDEF | admin-gated reorder `display_order` |
+| `get_user_email(uuid)` | plpgsql STABLE, SECDEF | email iz `auth.users` (admin za sve, ostali samo za sebe) |
 
 ---
 
-## TypeScript tipovi — strategija
+## RLS politike — NAPOMENA o dupliranju
 
-```bash
-# Treba pokrenuti svaki put kada se menja schema:
-npx supabase gen types typescript \
-  --project-id <YOUR_PROJECT_ID> \
-  > lib/db/types.ts
-```
+RLS je uključen na svim `public` tabelama. **Politike imaju duplikate iz ručnog
+razvoja** — više preklapajućih politika za istu operaciju na `appointments`,
+`services` i `profiles` (npr. „Staff full access appointments" + `appointments_*`
+set; više SELECT politika na `profiles`; više read politika na `services`).
 
-Onda u Supabase klijent kodu:
+Ovo **radi ispravno** — PostgreSQL OR-uje sve permisivne politike za istu
+operaciju, pa pristup nije pogrešan, samo je redundantno. **Planiran je poseban
+`security-cleanup` task** da se konsoliduju u jedan koherentan set.
 
-```typescript
-import type { Database } from '@/lib/db/types';
-import { createBrowserClient } from '@supabase/ssr';
-
-export const supabase = createBrowserClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// Sad supabase.from('appointments').select('*') vraća pravilno tipovan red.
-type Appointment = Database['public']['Tables']['appointments']['Row'];
-```
-
-**Akcija za mobilnu app:** preporuka da i oni dodaju ovo. Manje hack-ova,
-manje `as any` cast-ova. Ali to je njihov problem za posle — za sad ih ne
-diramo.
+Sažetak po tabeli (pristup je korektan, imenovanje neuredno):
+- **appointments**: staff/admin pun pristup; pacijent vidi/menja svoje; anon vidi confirmed/pending slotove (guest booking).
+- **services**: staff/admin menja; svi authenticated čitaju; anon vidi aktivne.
+- **profiles**: svako vidi/menja svoj red; staff/admin vide sve.
+- **chairs**: admin menja, staff čita.
+- **notifications / push_tokens**: vlasnik (`user_id = auth.uid()`); staff dodatno na notifications.
+- **working_hours / time_off**: staff menja, svi čitaju (+ anon read).
+- **audit_log**: samo admin SELECT.
+- **ai_conversations**: samo service_role.
 
 ---
 
-## Sync sa mobilnom app — pravila
+## Radni tok migracija ubuduće
 
-1. **Pre svake nove migracije**: razmisli da li je breaking za mobilnu
-2. **Nullable je tvoj prijatelj** — uvek dodaj novu kolonu kao NULLABLE prvo, pa je popuni vrednostima, pa tek onda razmisli o NOT NULL
-3. **Mobilna NE dira** `doctor_id` u terminima koje pacijent kreira — uvek NULL → web kalendar ih prikazuje u "Bez doktora" koloni ili automatski dodeljuje default doktoru
-4. **Service role key se NIKAD ne deli sa mobilnom** — samo web ima taj key, samo za server-side admin operacije
-5. **RPC funkcije** su shared resource — ne modifikuj postojeće `create_guest_appointment`, `reorder_services`, `delete_service`. Dodaj nove ako trebaju (npr. `bulk_reassign_doctor`)
+1. Promene šeme = **nove migracije** u `supabase/migrations/` (timestamp
+   `YYYYMMDDHHMMSS_naziv.sql`), povrh baseline-a. Nema više ručnih izmena kroz
+   SQL Editor.
+2. Posle promene šeme regeneriši tipove:
+   ```bash
+   npx supabase gen types typescript --linked > lib/db/types.ts
+   ```
+3. Nove kolone prvo kao **NULLABLE** (mobilna app deli istu bazu — izbegavaj
+   breaking promene).
+4. **Service role key** je samo web/server-side (admin operacije), nikad u
+   klijentu ni u mobilnoj.

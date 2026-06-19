@@ -12,7 +12,6 @@ import { ChairSelector } from "./ChairSelector";
 
 const LAYOUTS = [
   { value: "standard", label: "Standard" },
-  { value: "fokus", label: "Fokus" },
   { value: "split", label: "Podeljeni" },
 ] as const;
 
@@ -41,7 +40,7 @@ export function KalendarHeader({
   )}`;
 
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="relative flex items-center justify-between gap-4">
       <div className="relative flex items-center gap-3">
         {/* Prethodna nedelja */}
         <button
@@ -57,7 +56,7 @@ export function KalendarHeader({
         <button
           type="button"
           onClick={() => setPickerOpen((o) => !o)}
-          className="font-serif text-3xl font-bold capitalize text-venus-text transition-colors hover:text-venus-gold"
+          className="text-[17px] font-medium capitalize text-venus-text transition-colors hover:text-venus-gold"
         >
           {range}
         </button>
@@ -93,9 +92,6 @@ export function KalendarHeader({
           {appointmentCount} termina
         </span>
 
-        {/* Selektor stolice */}
-        <ChairSelector />
-
         {pickerOpen && (
           <>
             {/* Overlay — klik van dropdown-a zatvara */}
@@ -108,8 +104,16 @@ export function KalendarHeader({
         )}
       </div>
 
+      {/* Selektor stolice — fiksiran na sredinu headera (absolute), nezavisno
+          od širine leve grupe (broj termina), pa se ne pomera. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="pointer-events-auto">
+          <ChairSelector />
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
-        {/* Standard / Fokus / Podeljeni toggle */}
+        {/* Standard / Podeljeni toggle */}
         <div className="flex items-center gap-1 rounded-full bg-venus-surface-2 p-1">
           {LAYOUTS.map((opt) => (
             <button
@@ -117,7 +121,7 @@ export function KalendarHeader({
               type="button"
               onClick={() => setLayout(opt.value)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-full px-[14px] py-[5px] text-[14px] font-medium transition-colors",
                 layout === opt.value
                   ? "bg-venus-gold text-[#0d0d0d]"
                   : "text-venus-text-dim hover:text-venus-text"

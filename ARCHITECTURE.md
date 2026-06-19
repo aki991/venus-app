@@ -125,12 +125,17 @@ venus-web/
 
 ### Role i pristup
 
+Živa baza ima **tri role** (`user_role` enum): `patient`, `staff`, `admin`.
+Nema zasebnih `doctor`/`assistant` rola — razlika doktor-vs-asistent se izražava
+kroz `profiles.specialty`, a ne kroz rolu.
+
 | Role | Mobile app | Web app |
 |---|---|---|
-| `patient` | Pun pristup (svoj karton, svoji termini) | **Blokiran**, redirect na "Ova app je za zaposlene" |
-| `assistant` | (trenutno N/A — još ne postoji) | Pun kalendar, pacijenti, termini. **Bez** finansija. |
-| `doctor` | (trenutno N/A — još ne postoji) | Pun kalendar, kartoni svojih pacijenata, finansije. |
-| `admin` | Postojeći AdminNavigator | Sve što i doctor + user management + cenovnik. |
+| `patient` | Pun pristup (svoj karton, svoji termini) | **Blokiran**, redirect na „Ova app je za zaposlene" (`/patient-not-allowed`) |
+| `staff` | (N/A) | Doktor **ili** asistent (razlika kroz `specialty`). Pun pristup kalendaru/pacijentima/terminima. |
+| `admin` | Postojeći AdminNavigator | Sve što i staff + **admin panel** (`/podesavanja`): doktori i stolice. |
+
+> RLS koristi helper funkcije `is_staff()` (role ∈ {admin, staff}) i `is_admin()`.
 
 ### Auth strategija
 - **Cookies-based session** (`@supabase/ssr`), ne localStorage
@@ -140,8 +145,44 @@ venus-web/
 - **Role check** se radi u layout-u (`app/(dashboard)/layout.tsx`) i dodatno enforce-uje preko RLS
 
 ### RLS politike (vidi `SCHEMA.md` za detalje)
-Postojeće RLS u bazi tretira `admin` kao super-user. Mi proširujemo da `doctor`
-i `assistant` imaju iste privilegije za sve operacije osim user management-a.
+RLS koristi `is_staff()` / `is_admin()` SECURITY DEFINER helper-e. Staff ima pun
+pristup operativnim podacima; admin dodatno upravlja doktorima i stolicama.
+
+> **Napomena:** RLS politike trenutno imaju duplikate iz ručnog razvoja
+> (preklapajuće politike na `appointments`/`services`/`profiles`). Rade ispravno
+> (Postgres OR-uje politike za istu operaciju), ali planiran je `security-cleanup`
+> task da se konsoliduju. Detalji u `SCHEMA.md`.
+
+---
+
+## Resource scheduling — stolice (chairs)
+
+Ordinacija ima više fizičkih **stolica** (`chairs` tabela). Termin se može vezati
+za stolicu (`appointments.chair_id`, nullable).
+
+Ključ je **dual overlap constraint** na `appointments` (oba EXCLUDE USING gist,
+samo za `status IN ('confirmed','pending')`):
+- `appointments_no_overlap` — isti **doktor** ne može imati dva preklapajuća termina (COALESCE na nil-uuid da i „bez doktora" termini ne kolidiraju međusobno).
+- `appointments_no_overlap_chair` — ista **stolica** ne može biti duplo zauzeta (samo kad `chair_id IS NOT NULL`).
+
+Tako se nezavisno garantuje da ni doktor ni stolica nisu duplo bukirani. Izbor
+stolice u kalendaru je u headeru (`ChairSelector`), default stolica se pamti u
+`kalendarStore`.
+
+---
+
+## Admin panel (`/podesavanja`)
+
+Admin-only stranica za upravljanje **doktorima** i **stolicama**. Pristup je
+gejtovan i u layout-u (role check) i kroz RLS/RPC.
+
+- **Server Actions + service role**: kreiranje/izmena doktora ide kroz SECURITY
+  DEFINER RPC (`admin_upsert_doctor`, `admin_set_doctor_active`) koje interno
+  proveravaju da je pozivalac admin. Osetljive operacije koje zahtevaju elevaciju
+  koriste **service role key isključivo na serveru** (nikad u klijentu).
+- `profiles.is_active` služi kao **soft delete** doktora (deaktivacija umesto
+  brisanja, da se očuva istorija termina).
+- `prevent_role_self_elevation` trigger sprečava da neko sam sebi podigne rolu.
 
 ---
 
@@ -205,9 +246,12 @@ npm run start
 
 | Faza | Sadržaj | Status |
 |---|---|---|
-| **0** | Setup, auth, dump postojeće schema, multi-doctor migracija | ⏳ |
-| **1 (MVP)** | Kalendar — pregled, kreiranje, edit, cancel termina, doctor filter | ⏳ |
-| **2** | Dnevnik pacijenata + Odontogram + Protokol Dg/Th | — |
-| **3** | Računi + Usluge (cenovnik admin) | — |
-| **4** | Realtime sync, Storage za RTG, PDF računi, audit log UI | — |
-| **5** | Notifikacije za zaposlene, izveštaji, multi-ordinacija (ako bude trebalo) | — |
+| **0 / 1 (MVP)** | Setup, auth, kalendar — pregled, kreiranje, edit, cancel termina, doctor filter | ✅ |
+| **A** | Stolice (chairs) — resource scheduling, dual overlap constraint | ✅ |
+| **B** | Admin panel (`/podesavanja`) — doktori + stolice, globalni modali | ✅ |
+| **Sledeće** | Usluge (cenovnik admin) | — |
+| | Dnevnik pacijenata | — |
+| | Odontogram + Protokol Dg/Th | — |
+| | Računi (PDF) | — |
+| **Kasnije** | Realtime sync, Storage za RTG, audit log UI, izveštaji | — |
+| | `security-cleanup` — konsolidacija dupliranih RLS politika | — |
