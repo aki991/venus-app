@@ -22,3 +22,11 @@ export interface UpdateDoctorInput {
   specialty: string;
   phone: string;
 }
+
+export interface ServiceInput {
+  name: string;
+  description: string | null;
+  category: string;
+  durationMinutes: number;
+  price: number | null;
+}

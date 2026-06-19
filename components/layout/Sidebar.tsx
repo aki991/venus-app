@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   { href: "/kalendar", label: "Kalendar", icon: Calendar, enabled: true },
   { href: "/dnevnik", label: "Dnevnik", icon: FileText, enabled: false },
   { href: "/racuni", label: "Računi", icon: Receipt, enabled: false },
-  { href: "/usluge", label: "Usluge", icon: Stethoscope, enabled: false },
+  { href: "/usluge", label: "Usluge", icon: Stethoscope, enabled: true },
 ];
 
 const DEFAULT_DOCTOR_COLOR = "#e5c45f";
