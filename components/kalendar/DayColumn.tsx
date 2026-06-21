@@ -36,12 +36,22 @@ export function DayColumn({
 
   const gridHeight = totalSlots * slotHeight;
 
+  // Početak datog slota kao Date u lokalnom vremenu konkretnog dana.
+  function slotStartDate(idx: number): Date {
+    const totalMin = hoursStart * 60 + idx * slotMin;
+    const d = new Date(day);
+    d.setHours(Math.floor(totalMin / 60), totalMin % 60, 0, 0);
+    return d;
+  }
+
+  // Slot je "prošao" ako mu je početak pre sadašnjeg trenutka.
+  function isSlotPast(idx: number): boolean {
+    return slotStartDate(idx).getTime() < now.getTime();
+  }
+
   // Vreme početka datog slota: slot 10:00–10:15 → "10:00", itd.
   function slotTime(idx: number): string {
-    const totalMin = hoursStart * 60 + idx * slotMin;
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    return format(slotStartDate(idx), "HH:mm");
   }
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -54,6 +64,11 @@ export function DayColumn({
     const y = e.clientY - rect.top;
     // Floor na slot: ceo opseg slota pokazuje vreme njegovog početka.
     const idx = Math.max(0, Math.min(Math.floor(y / slotHeight), totalSlots - 1));
+    // Nad prošlim slotom ne prikazujemo liniju sa vremenom (slot je neaktivan).
+    if (isSlotPast(idx)) {
+      setHoverSlot(null);
+      return;
+    }
     setHoverSlot(idx);
   }
 
@@ -97,14 +112,8 @@ export function DayColumn({
           Prošli slotovi (početak slota < sada) su zasivljeni i ne reaguju na klik.
           Pošto se proverava svaki slot, cela prošla kolona dana ispada zasivljena. */}
       {Array.from({ length: totalSlots }).map((_, i) => {
-        const totalMin = hoursStart * 60 + i * slotMin;
-        const h = Math.floor(totalMin / 60);
-        const m = totalMin % 60;
-        const timeLabel = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-        // Početak slota u lokalnom vremenu konkretnog dana.
-        const slotStart = new Date(day);
-        slotStart.setHours(h, m, 0, 0);
-        const isPast = slotStart.getTime() < now.getTime();
+        const timeLabel = slotTime(i);
+        const isPast = isSlotPast(i);
         return (
           <button
             type="button"
@@ -145,6 +154,7 @@ export function DayColumn({
           <AppointmentBlock
             key={appt.id}
             appointment={appt}
+            now={now}
             style={{ top, height }}
           />
         );

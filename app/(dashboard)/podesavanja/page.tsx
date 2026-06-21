@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/get-user";
-import { fetchAllDoctors, fetchAllChairs } from "@/lib/db/admin";
+import {
+  fetchAllDoctors,
+  fetchAllChairs,
+  fetchAiDefaultDoctorId,
+} from "@/lib/db/admin";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 
 export default async function PodesavanjaPage() {
@@ -10,9 +14,10 @@ export default async function PodesavanjaPage() {
   if (!user) redirect("/login");
   if (user.role !== "admin") redirect("/kalendar");
 
-  const [doctors, chairs] = await Promise.all([
+  const [doctors, chairs, aiDefaultDoctorId] = await Promise.all([
     fetchAllDoctors(),
     fetchAllChairs(),
+    fetchAiDefaultDoctorId(),
   ]);
 
   return (
@@ -23,7 +28,11 @@ export default async function PodesavanjaPage() {
       <p className="mb-6 mt-1 text-sm text-venus-text-dim">
         Upravljanje doktorima i stolicama ordinacije.
       </p>
-      <AdminPanel doctors={doctors} chairs={chairs} />
+      <AdminPanel
+        doctors={doctors}
+        chairs={chairs}
+        aiDefaultDoctorId={aiDefaultDoctorId}
+      />
     </div>
   );
 }

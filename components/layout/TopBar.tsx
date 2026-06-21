@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Search, Settings, Plus, Sun, Moon, LogOut } from "lucide-react";
+import { Settings, Plus, Sun, Moon, LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
@@ -79,19 +79,6 @@ export function TopBar({ user }: { user: UserWithProfile }) {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-venus-border bg-venus-surface/80 px-6 backdrop-blur-md">
-      {/* Search (samo UI) */}
-      <div className="relative w-[320px]">
-        <Search
-          size={16}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-venus-text-faint"
-        />
-        <input
-          type="text"
-          placeholder="Pretraži pacijente, termine..."
-          className="h-10 w-full rounded-lg border border-venus-border bg-venus-surface-2 pl-9 pr-3 text-sm text-venus-text outline-none placeholder:text-venus-text-faint focus:border-venus-gold/50"
-        />
-      </div>
-
       <div className="flex-1" />
 
       <ThemeToggle />

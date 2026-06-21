@@ -24,6 +24,7 @@ export interface AppointmentWithRelations {
     id: string;
     first_name: string | null;
     last_name: string | null;
+    phone: string | null;
   } | null;
 }
 
@@ -43,7 +44,7 @@ export async function fetchAppointmentsForWeek(
       service:services(id, name, duration_minutes),
       chair:chairs(id, name),
       doctor:profiles!appointments_doctor_id_fkey(id, first_name, last_name, initials, color_hex),
-      patient:profiles!appointments_patient_id_fkey(id, first_name, last_name)
+      patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone)
     `
     )
     .gte("starts_at", weekStart.toISOString())

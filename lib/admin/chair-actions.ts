@@ -79,7 +79,15 @@ export async function setChairActiveAction(
   }
 }
 
-/** Pravi delete — samo ako stolica nema nijedan termin (FK je i ON DELETE RESTRICT). */
+/**
+ * Pravi delete. Blokira SAMO ako stolica ima AKTIVNE termine: budući (kraj još
+ * nije prošao) i neotkazani (pending/confirmed). Prošli i otkazani ne smetaju.
+ *
+ * FK appointments.chair_id je ON DELETE RESTRICT, pa bi i prošli/otkazani termini
+ * koji referenciraju stolicu blokirali DELETE na nivou baze. Zato ih prvo
+ * odvezujemo (chair_id = NULL) — ostaju u istoriji bez stolice — pa tek onda
+ * brišemo stolicu.
+ */
 export async function deleteChairAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
@@ -88,13 +96,24 @@ export async function deleteChairAction(id: string): Promise<ActionResult> {
     const { count, error: countErr } = await supabase
       .from("appointments")
       .select("id", { count: "exact", head: true })
-      .eq("chair_id", id);
+      .eq("chair_id", id)
+      .in("status", ["pending", "confirmed"])
+      .gte("ends_at", new Date().toISOString());
     if (countErr) return { error: countErr.message };
     if ((count ?? 0) > 0) {
       return {
-        error: "Stolica ima termine, deaktivirajte je umesto brisanja",
+        error:
+          "Stolica ima aktivne (buduće) termine, deaktivirajte je umesto brisanja",
       };
     }
+
+    // Odveži preostale (prošle/otkazane) termine sa ove stolice da RESTRICT ne
+    // blokira brisanje.
+    const { error: detachErr } = await supabase
+      .from("appointments")
+      .update({ chair_id: null, updated_at: new Date().toISOString() })
+      .eq("chair_id", id);
+    if (detachErr) return { error: detachErr.message };
 
     const { error } = await supabase.from("chairs").delete().eq("id", id);
     if (error) return { error: error.message };

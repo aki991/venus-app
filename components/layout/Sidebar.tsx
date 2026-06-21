@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Calendar,
   FileText,
-  Receipt,
+  Users,
   Stethoscope,
   ChevronLeft,
   type LucideIcon,
@@ -32,7 +32,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/kalendar", label: "Kalendar", icon: Calendar, enabled: true },
   { href: "/dnevnik", label: "Dnevnik", icon: FileText, enabled: false },
-  { href: "/racuni", label: "Računi", icon: Receipt, enabled: false },
+  { href: "/pacijenti", label: "Pacijenti", icon: Users, enabled: true },
   { href: "/usluge", label: "Usluge", icon: Stethoscope, enabled: true },
 ];
 

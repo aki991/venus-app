@@ -140,6 +140,33 @@ export async function updateDoctorAction(
   }
 }
 
+/**
+ * Reorder doktora preko admin_reorder_doctors(items jsonb) RPC.
+ * orderedIds = NOVI redosled (ceo spisak), pa display_order = index.
+ * RPC interno proverava admina (auth.uid() → COOKIE klijent).
+ */
+export async function reorderDoctorsAction(
+  orderedIds: string[]
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const supabase = await createClient();
+
+    const items = orderedIds.map((id, index) => ({
+      id,
+      display_order: index,
+    }));
+
+    const { error } = await supabase.rpc("admin_reorder_doctors", { items });
+    if (error) return { error: error.message };
+
+    revalidatePath("/podesavanja");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Greška" };
+  }
+}
+
 /** Deaktivacija / reaktivacija (soft delete). */
 export async function setDoctorActiveAction(
   profileId: string,
@@ -169,15 +196,21 @@ export async function deleteDoctorAction(
     await requireAdmin();
     const supabase = await createClient();
 
+    // Blokira brisanje SAMO ako doktor ima AKTIVNE termine: budući (kraj još
+    // nije prošao) i neotkazani (pending/confirmed). Prošli i otkazani termini
+    // ne smetaju — oni postaju "bez doktora" (appointments.doctor_id ON DELETE
+    // SET NULL) i ostaju u istoriji.
     const { count, error: countErr } = await supabase
       .from("appointments")
       .select("id", { count: "exact", head: true })
-      .eq("doctor_id", profileId);
+      .eq("doctor_id", profileId)
+      .in("status", ["pending", "confirmed"])
+      .gte("ends_at", new Date().toISOString());
     if (countErr) return { error: countErr.message };
     if ((count ?? 0) > 0) {
       return {
         error:
-          "Doktor ima zakazane termine, deaktivirajte ga umesto brisanja",
+          "Doktor ima aktivne (buduće) termine, deaktivirajte ga umesto brisanja",
       };
     }
 

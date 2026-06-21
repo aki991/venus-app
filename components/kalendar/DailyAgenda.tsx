@@ -1,7 +1,7 @@
 "use client";
 
 import { parseISO, isSameDay, format } from "date-fns";
-import { sr } from "date-fns/locale";
+import { srLatn } from "date-fns/locale";
 import { Armchair } from "lucide-react";
 
 import { useKalendarStore } from "@/stores/kalendarStore";
@@ -44,7 +44,7 @@ export function DailyAgenda({
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
 
   // "Sreda · 18. jun" — srpski naziv dana i meseca, prvo slovo veliko
-  const rawTitle = format(selectedDate, "EEEE · d. LLLL", { locale: sr });
+  const rawTitle = format(selectedDate, "EEEE · d. LLLL", { locale: srLatn });
   const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
 
   return (

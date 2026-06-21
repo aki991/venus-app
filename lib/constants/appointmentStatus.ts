@@ -29,3 +29,18 @@ export const STATUS_CONFIG: Record<AppointmentStatus, StatusConfig> = {
   no_show: { label: "Nije došao", color: "#a07f9e", icon: UserX },
   cancelled: { label: "Otkazan", color: "#c84545", icon: X },
 };
+
+// Izvedeni status za PRIKAZ: termin koji je već protekao (kraj < sada), a bio je
+// "potvrđen", automatski se prikazuje kao "završen" — bez ručne izmene i bez
+// upisa u bazu. Ostali statusi (pending, no_show, completed, cancelled) se ne
+// diraju (npr. "nije došao" ostaje "nije došao i kad protekne).
+export function effectiveStatus(
+  status: AppointmentStatus,
+  endsAt: string,
+  now: Date = new Date()
+): AppointmentStatus {
+  if (status === "confirmed" && new Date(endsAt).getTime() < now.getTime()) {
+    return "completed";
+  }
+  return status;
+}

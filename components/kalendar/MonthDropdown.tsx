@@ -14,7 +14,7 @@ import {
   subMonths,
   format,
 } from "date-fns";
-import { sr } from "date-fns/locale";
+import { srLatn } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ export function MonthDropdown({ onClose }: { onClose: () => void }) {
   const gridEnd = endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
 
-  const monthLabel = format(viewMonth, "LLLL yyyy", { locale: sr }).toUpperCase();
+  const monthLabel = format(viewMonth, "LLLL yyyy", { locale: srLatn }).toUpperCase();
 
   return (
     <div className="absolute left-0 top-full z-50 mt-2 w-[300px] rounded-[13px] border border-venus-border bg-venus-surface p-4 shadow-xl shadow-black/40">

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { parseISO, format } from "date-fns";
-import { sr } from "date-fns/locale";
-import { AlertTriangle, Loader2, Pencil, Trash2 } from "lucide-react";
+import { srLatn } from "date-fns/locale";
+import { AlertTriangle, Loader2, Pencil, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -37,7 +36,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { STATUS_CONFIG } from "@/lib/constants/appointmentStatus";
+import {
+  STATUS_CONFIG,
+  effectiveStatus,
+} from "@/lib/constants/appointmentStatus";
 import {
   fitsWithinWorkingHours,
   getTimeSlots,
@@ -46,13 +48,6 @@ import {
 import { addMinutesISO, toISO } from "./NewAppointmentModal";
 
 type AppointmentStatus = AppointmentWithRelations["status"];
-
-const EDIT_STATUSES: { value: AppointmentStatus; label: string }[] = [
-  { value: "confirmed", label: STATUS_CONFIG.confirmed.label },
-  { value: "pending", label: STATUS_CONFIG.pending.label },
-  { value: "completed", label: STATUS_CONFIG.completed.label },
-  { value: "no_show", label: STATUS_CONFIG.no_show.label },
-];
 
 type Mode = "view" | "edit" | "cancel";
 
@@ -66,10 +61,10 @@ function patientDisplay(appt: AppointmentWithRelations): {
         [appt.patient.first_name, appt.patient.last_name]
           .filter(Boolean)
           .join(" ") || "Bez imena",
-      phone: null,
+      phone: appt.patient.phone,
     };
   }
-  return { name: appt.walk_in_name ?? "Walk-in", phone: appt.walk_in_phone };
+  return { name: appt.walk_in_name ?? "—", phone: appt.walk_in_phone };
 }
 
 function StatusBadge({ status }: { status: AppointmentStatus }) {
@@ -162,7 +157,7 @@ export function AppointmentDetailModal({
         </div>
 
         {mode === "view" && (
-          <ViewMode appointment={appointment} />
+          <ViewMode appointment={appointment} onClose={onClose} />
         )}
         {mode === "edit" && (
           <EditMode
@@ -179,7 +174,13 @@ export function AppointmentDetailModal({
   );
 }
 
-function ViewMode({ appointment }: { appointment: AppointmentWithRelations }) {
+function ViewMode({
+  appointment,
+  onClose,
+}: {
+  appointment: AppointmentWithRelations;
+  onClose: () => void;
+}) {
   const patient = patientDisplay(appointment);
   const doctorName =
     [appointment.doctor?.first_name, appointment.doctor?.last_name]
@@ -188,37 +189,75 @@ function ViewMode({ appointment }: { appointment: AppointmentWithRelations }) {
   const start = parseISO(appointment.starts_at);
   const end = parseISO(appointment.ends_at);
 
+  // "Nije došao" je jedini ručni status (ostali su automatski: novi = potvrđen,
+  // protekli = završen). Toggle: no_show ↔ confirmed.
+  const updateMutation = useUpdateAppointment();
+  const isNoShow = appointment.status === "no_show";
+  // Dugme je aktivno tek kad prođe vreme POČETKA termina (npr. 12:00 → od 12:01).
+  // Računamo "sada" na render; modal se otvara po potrebi pa je dovoljno precizno.
+  const started = Date.now() > start.getTime();
+
+  async function toggleNoShow() {
+    try {
+      await updateMutation.mutateAsync({
+        id: appointment.id,
+        input: { status: isNoShow ? "confirmed" : "no_show" },
+      });
+      toast.success(isNoShow ? "Vraćeno na potvrđen" : "Označeno: nije došao");
+      onClose();
+    } catch (err) {
+      toast.error(appointmentErrorMessage(err, "Greška pri izmeni statusa"));
+    }
+  }
+
   return (
-    <div className="divide-y divide-venus-line">
-      <InfoRow label="Pacijent">
-        <div className="leading-tight">
-          <div>{patient.name}</div>
-          {patient.phone && (
-            <div className="text-xs text-venus-text-dim">{patient.phone}</div>
+    <div>
+      <div className="mb-2 flex justify-end">
+        <Button
+          type="button"
+          variant={isNoShow ? "default" : "outline"}
+          size="sm"
+          onClick={toggleNoShow}
+          disabled={updateMutation.isPending || (!started && !isNoShow)}
+          title={
+            !started && !isNoShow
+              ? "Dostupno tek nakon početka termina"
+              : undefined
+          }
+        >
+          {updateMutation.isPending ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <UserX size={14} />
           )}
-          {!appointment.patient && (
-            <div className="text-xs text-venus-text-faint">Walk-in</div>
-          )}
-        </div>
-      </InfoRow>
+          {isNoShow ? "Poništi „Nije došao”" : "Nije došao"}
+        </Button>
+      </div>
+
+      <div className="divide-y divide-venus-line">
+      <InfoRow label="Ime">{patient.name}</InfoRow>
+      <InfoRow label="Broj">{patient.phone ?? "—"}</InfoRow>
       <InfoRow label="Doktor">{doctorName}</InfoRow>
       <InfoRow label="Stolica">{appointment.chair?.name ?? "—"}</InfoRow>
       <InfoRow label="Usluga">{appointment.service?.name ?? "—"}</InfoRow>
       <InfoRow label="Datum">
-        {format(start, "EEEE, d. MMMM yyyy.", { locale: sr })}
+        {format(start, "EEEE, d. MMMM yyyy.", { locale: srLatn })}
       </InfoRow>
       <InfoRow label="Vreme">
         {format(start, "HH:mm")} – {format(end, "HH:mm")}
       </InfoRow>
       <InfoRow label="Status">
-        <StatusBadge status={appointment.status} />
+        <StatusBadge
+          status={effectiveStatus(appointment.status, appointment.ends_at)}
+        />
       </InfoRow>
-      {appointment.notes && (
-        <div className="py-2">
-          <p className="mb-1 text-sm text-venus-text-dim">Napomene</p>
-          <p className="text-sm">{appointment.notes}</p>
-        </div>
-      )}
+        {appointment.notes && (
+          <div className="py-2">
+            <p className="mb-1 text-sm text-venus-text-dim">Napomene</p>
+            <p className="text-sm">{appointment.notes}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -252,7 +291,6 @@ function EditMode({
   const [date, setDate] = useState(format(start, "yyyy-MM-dd"));
   const [time, setTime] = useState(format(start, "HH:mm"));
   const [duration, setDuration] = useState(initialDuration);
-  const [status, setStatus] = useState<AppointmentStatus>(appointment.status);
   const [notes, setNotes] = useState(appointment.notes ?? "");
 
   async function onSave() {
@@ -288,11 +326,6 @@ function EditMode({
           service_id: serviceId,
           starts_at: startsAt,
           ends_at: endsAt,
-          status: status as
-            | "pending"
-            | "confirmed"
-            | "completed"
-            | "no_show",
           notes: notes || null,
         },
       });
@@ -399,25 +432,6 @@ function EditMode({
             onChange={(e) => setDuration(Number(e.target.value))}
           />
         </div>
-      </div>
-
-      <div className="grid gap-1.5">
-        <Label>Status</Label>
-        <RadioGroup
-          className="grid grid-cols-2 gap-2"
-          value={status}
-          onValueChange={(v) => setStatus(v as AppointmentStatus)}
-        >
-          {EDIT_STATUSES.map((s) => (
-            <label
-              key={s.value}
-              className="flex cursor-pointer items-center gap-2 text-sm"
-            >
-              <RadioGroupItem value={s.value} />
-              {s.label}
-            </label>
-          ))}
-        </RadioGroup>
       </div>
 
       <div className="grid gap-1.5">

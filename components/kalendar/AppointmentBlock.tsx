@@ -5,23 +5,35 @@ import { parseISO, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/lib/db/appointments";
 import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
-import { STATUS_CONFIG } from "@/lib/constants/appointmentStatus";
+import {
+  STATUS_CONFIG,
+  effectiveStatus,
+} from "@/lib/constants/appointmentStatus";
 
 const DEFAULT_COLOR = "#e5c45f";
 
 export function AppointmentBlock({
   appointment,
+  now,
   style,
 }: {
   appointment: AppointmentWithRelations;
+  now?: Date;
   style?: React.CSSProperties;
 }) {
   const openDetail = useAppointmentModalStore((s) => s.openDetail);
 
   // Osnova bloka je BOJA DOKTORA (leva ivica + pozadina).
-  const color = appointment.doctor?.color_hex ?? DEFAULT_COLOR;
+  // `|| DEFAULT` (ne `??`) da i prazan string padne na default boju.
+  const color = appointment.doctor?.color_hex?.trim() || DEFAULT_COLOR;
+  // Tanak okvir (3 ne-leve strane) je PRIGUŠENA boja doktora — tako debela leva
+  // traka (puna boja) uvek dominira, nezavisno od statusa. Ranije su sve 4 strane
+  // bile ista puna boja, pa se kod 'confirmed' leva traka stapala sa okvirom i
+  // delovalo je kao da je nema (dok je kod 'pending' dashed okvir pravio kontrast).
+  const frameColor = `color-mix(in srgb, ${color} 42%, transparent)`;
 
-  const status = appointment.status;
+  // Prošli "potvrđen" termin se prikazuje kao "završen" (izvedeno, bez izmene baze).
+  const status = effectiveStatus(appointment.status, appointment.ends_at, now);
   const isPending = status === "pending";
   const isCompleted = status === "completed";
   const isNoShow = status === "no_show";
@@ -48,11 +60,15 @@ export function AppointmentBlock({
       }}
       style={{
         ...style,
-        // Tanak border oko celog bloka (pending = dashed cue) razdvaja susedne
-        // termine sličnih boja, PLUS deblja leva ivica = accent traka u boji
-        // doktora. borderLeft posle shorthand-a override-uje samo levu stranu.
-        border: `1.5px ${isPending ? "dashed" : "solid"} ${color}`,
-        borderLeft: `5px solid ${color}`,
+        // Border isključivo kao LONGHAND (width/style/color), nikad mešano sa
+        // `borderLeft` shorthand-om — inače React pri re-renderu (npr. promena
+        // statusa) ažurira `border` i resetuje levu ivicu, pa debela leva traka
+        // "nestane". Redosled strana: top right bottom left.
+        // Leva ivica: 5px PUNA boja doktora (uvek dominira), ostale 3: tanke i
+        // prigušene; dashed kao 'pending' cue.
+        borderWidth: "1.5px 1.5px 1.5px 5px",
+        borderStyle: isPending ? "dashed dashed dashed solid" : "solid",
+        borderColor: `${frameColor} ${frameColor} ${frameColor} ${color}`,
         // Neprozirna kartica: solidna surface pozadina + poluprozirni tint boje
         // doktora preko nje (gradient sloj). Tako se zadrži boja doktora, a
         // linije grida ne prosijavaju kroz blok niti seku tekst.

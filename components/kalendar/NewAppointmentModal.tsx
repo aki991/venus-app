@@ -41,7 +41,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -390,34 +389,6 @@ export function NewAppointmentModal({
                 )}
               />
             </div>
-
-            {/* Status */}
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      className="flex gap-4"
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
-                        <RadioGroupItem value="confirmed" />
-                        Potvrđen
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
-                        <RadioGroupItem value="pending" />
-                        Na čekanju
-                      </label>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Napomena */}
             <FormField

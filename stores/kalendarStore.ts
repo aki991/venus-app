@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { defaultCalendarDate } from "@/lib/constants/workingHours";
+
 type KalendarLayout = "standard" | "fokus" | "split";
 
 interface KalendarState {
@@ -21,7 +23,7 @@ interface KalendarState {
 export const useKalendarStore = create<KalendarState>()(
   persist(
     (set, get) => ({
-      selectedDate: new Date(),
+      selectedDate: defaultCalendarDate(),
       layout: "standard",
       doctorFilter: null,
       selectedChairId: null,
@@ -40,7 +42,7 @@ export const useKalendarStore = create<KalendarState>()(
         d.setDate(d.getDate() + 7);
         set({ selectedDate: d });
       },
-      goToToday: () => set({ selectedDate: new Date() }),
+      goToToday: () => set({ selectedDate: defaultCalendarDate() }),
     }),
     {
       name: "venus-kalendar-state",

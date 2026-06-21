@@ -269,10 +269,11 @@ function FilterPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-3 py-1 text-[13px] font-medium transition-colors",
+        // +30% veće (px-4/py-1.5/text-base) i crna osnova (kao tabovi na admin panelu)
+        "rounded-full border px-4 py-1.5 text-base font-medium transition-colors",
         active
-          ? "bg-venus-gold text-[#0d0d0d]"
-          : "bg-venus-surface-2 text-venus-text-dim hover:text-venus-text"
+          ? "border-venus-gold bg-venus-gold text-[#0d0d0d]"
+          : "border-venus-border bg-venus-canvas text-venus-text-dim hover:text-venus-text"
       )}
     >
       {label}
@@ -339,7 +340,7 @@ function ServiceRow({
       ref={innerRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-venus-border bg-venus-surface p-3",
+        "flex items-center gap-3 rounded-xl border border-venus-border bg-venus-canvas p-3",
         !service.is_active && "opacity-60"
       )}
     >

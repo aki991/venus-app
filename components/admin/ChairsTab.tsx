@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Armchair, Pencil, Plus, Trash2 } from "lucide-react";
@@ -110,7 +110,7 @@ function ChairRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-xl border border-venus-border bg-venus-surface p-3",
+        "flex items-center gap-4 rounded-xl border border-venus-border bg-venus-canvas p-3",
         !chair.is_active && "opacity-60"
       )}
     >
@@ -159,8 +159,9 @@ function ChairRow({
           <AlertDialogHeader>
             <AlertDialogTitle>Obrisati stolicu?</AlertDialogTitle>
             <AlertDialogDescription>
-              „{chair.name}" će biti trajno obrisana. Ovo je moguće samo ako
-              stolica nema nijedan termin — u suprotnom je deaktivirajte.
+              „{chair.name}" će biti trajno obrisana. Moguće je samo ako stolica
+              nema aktivnih (budućih, neotkazanih) termina — prošli i otkazani ne
+              smetaju i ostaju u istoriji bez stolice. U suprotnom je deaktivirajte.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -191,6 +192,11 @@ function ChairDialog({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
 
+  // onOpenChange se ne okida pri programskom open-u, pa naziv punimo kroz effect.
+  useEffect(() => {
+    if (open) setName(editing?.name ?? "");
+  }, [open, editing]);
+
   function onSubmit() {
     if (!name.trim()) {
       toast.error("Unesite naziv stolice");
@@ -212,13 +218,7 @@ function ChairDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (v) setName(editing?.name ?? "");
-        onOpenChange(v);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>

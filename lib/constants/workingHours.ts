@@ -35,6 +35,18 @@ export function todayDateStr(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+// Datum koji kalendar treba da prikaže "po defaultu".
+// Ordinacija ne radi vikendom (Pon–Pet), pa subotom/nedeljom vraćamo
+// ponedeljak SLEDEĆE nedelje — prvi dan kada se može zakazati termin.
+// Radnim danom vraća prosleđeni datum (default = danas).
+export function defaultCalendarDate(now: Date = new Date()): Date {
+  const day = now.getDay(); // 0 = nedelja, 6 = subota
+  const addDays = day === 6 ? 2 : day === 0 ? 1 : 0;
+  const d = new Date(now);
+  d.setDate(d.getDate() + addDays);
+  return d;
+}
+
 // Da li je dati datum (YYYY-MM-DD) radni dan (Pon–Pet)?
 // Parsiramo komponente ručno da izbegnemo UTC pomeranje iz new Date("YYYY-MM-DD").
 export function isWorkingDay(dateStr: string): boolean {

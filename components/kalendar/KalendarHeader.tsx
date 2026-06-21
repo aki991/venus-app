@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { startOfWeek, addDays, format } from "date-fns";
-import { sr } from "date-fns/locale";
+import { srLatn } from "date-fns/locale";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,10 +33,10 @@ export function KalendarHeader({
   const weekEnd = addDays(weekStart, 6);
 
   // Range = prikazana nedelja (Pon–Ned), npr. "15. jun – 21. jun"
-  const range = `${format(weekStart, "d. LLL", { locale: sr })} – ${format(
+  const range = `${format(weekStart, "d. LLL", { locale: srLatn })} – ${format(
     weekEnd,
     "d. LLL",
-    { locale: sr }
+    { locale: srLatn }
   )}`;
 
   return (
