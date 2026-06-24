@@ -5,18 +5,10 @@ import {
   type ToothCondition,
   type ToothSurface,
 } from "@/lib/constants/toothConditions";
+import { toothWidth } from "@/lib/constants/toothAnatomy";
 
-// Anatomska širina po poslednjoj cifri FDI broja (visina je fiksna za sve):
-//   molari (6,7,8) najširi, premolari (4,5) uži, očnjak+sekutići (1,2,3) najuži.
-const WIDE = 40;
-const MEDIUM = 32;
-const NARROW = 26;
+// Visina okluzalnog kvadrata (fiksna za sve zube). Širina varira (toothWidth).
 const HEIGHT = 44;
-
-function toothWidth(toothNumber: number): number {
-  const d = toothNumber % 10;
-  return d >= 6 ? WIDE : d >= 4 ? MEDIUM : NARROW;
-}
 
 export interface ToothProps {
   toothNumber: number;

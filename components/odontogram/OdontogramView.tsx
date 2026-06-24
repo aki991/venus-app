@@ -3,8 +3,10 @@
 import { useState } from "react";
 
 import { Tooth } from "@/components/odontogram/Tooth";
+import { ToothAnatomy } from "@/components/odontogram/ToothAnatomy";
 import { OdontogramLegend } from "@/components/odontogram/OdontogramLegend";
 import { ToothConditionMenu } from "@/components/odontogram/ToothConditionMenu";
+import { toothWidth } from "@/lib/constants/toothAnatomy";
 import {
   isStructuralCondition,
   type ToothCondition,
@@ -52,19 +54,42 @@ function ToothRow({
     : "text-[10px] tabular-nums text-venus-text-faint";
   const groupGap = large ? "gap-2" : "gap-1";
 
-  const cell = (n: number) => (
-    <div key={n} className="flex flex-col items-center gap-1">
-      {numbersOn === "top" && <span className={numberCls}>{n}</span>}
-      <Tooth
-        toothNumber={n}
-        surfaces={map[n]?.surfaces}
-        wholeTooth={map[n]?.wholeTooth ?? null}
-        onSurfaceClick={onSurfaceClick}
-        scale={scale}
-      />
-      {numbersOn === "bottom" && <span className={numberCls}>{n}</span>}
-    </div>
-  );
+  const cell = (n: number) => {
+    const w = toothWidth(n);
+    return (
+      <div key={n} className="flex flex-col items-center gap-1">
+        {numbersOn === "top" && (
+          <>
+            <ToothAnatomy
+              toothNumber={n}
+              width={w}
+              position="top"
+              scale={scale}
+            />
+            <span className={numberCls}>{n}</span>
+          </>
+        )}
+        <Tooth
+          toothNumber={n}
+          surfaces={map[n]?.surfaces}
+          wholeTooth={map[n]?.wholeTooth ?? null}
+          onSurfaceClick={onSurfaceClick}
+          scale={scale}
+        />
+        {numbersOn === "bottom" && (
+          <>
+            <span className={numberCls}>{n}</span>
+            <ToothAnatomy
+              toothNumber={n}
+              width={w}
+              position="bottom"
+              scale={scale}
+            />
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={large ? "flex items-stretch gap-3" : "flex items-stretch gap-1.5"}>
