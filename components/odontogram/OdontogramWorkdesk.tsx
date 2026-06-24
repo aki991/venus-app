@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { FileText, Loader2, RefreshCw, Search, UserPlus } from "lucide-react";
+import {
+  FileText,
+  Loader2,
+  RefreshCw,
+  Search,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -31,6 +38,13 @@ import { OdontogramView } from "@/components/odontogram/OdontogramView";
 import { PatientPicker } from "@/components/odontogram/PatientPicker";
 
 const STORAGE_KEY = "venus-odontogram-last-patient";
+const GUEST_DRAFT_KEY = "venus-odontogram-guest-draft";
+
+interface GuestDraft {
+  teeth: ToothMap;
+  firstName: string;
+  lastName: string;
+}
 
 export function OdontogramWorkdesk() {
   // active = null → "Pacijent gost" (lokalna skica, ne čuva se).
@@ -42,6 +56,9 @@ export function OdontogramWorkdesk() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [adding, startAdding] = useTransition();
+  // Tek kad pročitamo postojeći draft smemo da pišemo (da prvi prazan render
+  // ne pregazi sačuvanu skicu).
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   // Gost je default na prvom renderu (SSR-safe). Tek u useEffect proveravamo
   // localStorage i, ako ima poslednjeg pacijenta, prebacujemo na njega.
@@ -69,20 +86,57 @@ export function OdontogramWorkdesk() {
     };
   }, []);
 
+  // Učitaj gost draft (skica + ime/prezime) iz localStorage — samo klijent,
+  // posle mount-a (prvi render je prazan → nema hydration mismatch-a).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GUEST_DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Partial<GuestDraft>;
+        if (d.teeth && typeof d.teeth === "object") {
+          setGuestMap(d.teeth as ToothMap);
+        }
+        if (typeof d.firstName === "string") setFirstName(d.firstName);
+        if (typeof d.lastName === "string") setLastName(d.lastName);
+      }
+    } catch {
+      // korumpiran draft → tretiraj kao prazno (ne ruši stranicu)
+    }
+    setDraftLoaded(true);
+  }, []);
+
+  // Perzistuj gost draft na svaku promenu (samo u gost modu i tek po učitavanju).
+  useEffect(() => {
+    if (!draftLoaded) return;
+    if (active) return; // pravi pacijent se čuva u bazu, NE u draft
+    try {
+      const draft: GuestDraft = { teeth: guestMap, firstName, lastName };
+      localStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // npr. localStorage pun/blokiran → tiho ignoriši
+    }
+  }, [draftLoaded, active, guestMap, firstName, lastName]);
+
   function selectPatient(p: PatientPickerResult) {
+    // Draft OSTAJE (možeš se vratiti preko "Nov pacijent" i nastaviti skicu).
     setActive(p);
-    setGuestMap({}); // gost skica se odbacuje
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: p.id }));
     setPickerOpen(false);
   }
 
-  // "Nov pacijent": vrati na gost mod (prazna skica) za unos novog. Čistimo
-  // localStorage — "počinjem novog" znači da sledeće otvaranje ne vraća starog.
-  function startNewPatient() {
-    setActive(null);
-    setGuestMap({}); // sveža skica
+  // Namerno brisanje skice (dugme "Očisti skicu").
+  function clearDraft() {
+    setGuestMap({});
     setFirstName("");
     setLastName("");
+    localStorage.removeItem(GUEST_DRAFT_KEY);
+  }
+
+  // "Nov pacijent": vrati na gost mod. Zadržava postojeću skicu (draft) da se
+  // nastavi — slučajan prelaz ne gubi rad; namerno brisanje je "Očisti skicu".
+  // Čistimo samo "poslednjeg pacijenta" (sledeće otvaranje → gost, ne stari).
+  function startNewPatient() {
+    setActive(null);
     localStorage.removeItem(STORAGE_KEY);
     setPickerOpen(false);
   }
@@ -138,6 +192,7 @@ export function OdontogramWorkdesk() {
       setGuestMap({});
       setFirstName("");
       setLastName("");
+      localStorage.removeItem(GUEST_DRAFT_KEY); // skica preneta u bazu → nepotrebna
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: res.patientId }));
       toast.success("Pacijent dodat");
     });
@@ -217,6 +272,18 @@ export function OdontogramWorkdesk() {
                   <Search size={15} />
                   Izaberi pacijenta
                 </Button>
+                {(Object.keys(guestMap).length > 0 ||
+                  firstName.trim() !== "" ||
+                  lastName.trim() !== "") && (
+                  <Button
+                    variant="ghost"
+                    className="text-venus-text-dim"
+                    onClick={clearDraft}
+                  >
+                    <Trash2 size={15} />
+                    Očisti skicu
+                  </Button>
+                )}
               </div>
             </>
           )}
