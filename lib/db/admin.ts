@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { PatientStatus } from "@/lib/validations/patient";
 
 export interface DoctorAdminItem {
   id: string;
@@ -91,39 +92,114 @@ export async function fetchAiDefaultDoctorId(): Promise<string | null> {
   return data?.value ?? null;
 }
 
-export interface PatientAdminItem {
+// Pun zapis pacijenta iz `patients` registra (P1 model).
+export interface PatientRecord {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
+  card_number: string | null;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  gender: string | null;
   phone: string | null;
-  note: string | null;
+  email: string | null;
+  occupation: string | null;
+  location: string | null;
+  status: PatientStatus;
+  profile_id: string | null;
+  notes: string | null;
   created_at: string;
+  updated_at: string;
 }
 
-/** Svi pacijenti (profiles role='patient'). Staff/admin čita preko RLS. */
-export async function fetchPatients(): Promise<PatientAdminItem[]> {
-  const supabase = await createClient();
-  const base = (cols: string) =>
-    supabase
-      .from("profiles")
-      .select(cols)
-      .eq("role", "patient")
-      .order("first_name", { ascending: true });
+// Red u spisku — PatientRecord + izračunate godine.
+export interface PatientListItem extends PatientRecord {
+  age: number | null;
+}
 
-  // `note` kolona dolazi migracijom 20250108; fallback ako još ne postoji (42703).
-  let { data, error } = await base(
-    "id, first_name, last_name, phone, note, created_at"
-  );
-  if (error?.code === "42703") {
-    ({ data, error } = await base(
-      "id, first_name, last_name, phone, created_at"
-    ));
+const PATIENT_COLUMNS =
+  "id, card_number, first_name, last_name, date_of_birth, gender, phone, email, occupation, location, status, profile_id, notes, created_at, updated_at";
+
+/** Godine iz datuma rođenja (YYYY-MM-DD). null ako nema datuma. */
+export function ageFromDob(dob: string | null): number | null {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+/**
+ * Spisak pacijenata iz `patients` registra. Sort po prezimenu pa imenu. Ako
+ * search ima >= 2 znaka, filtrira po imenu/prezimenu/telefonu/broju kartona.
+ */
+export async function fetchPatients(
+  search?: string
+): Promise<PatientListItem[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("patients")
+    .select(PATIENT_COLUMNS)
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true });
+
+  const q = search?.trim() ?? "";
+  if (q.length >= 2) {
+    query = query.or(
+      `first_name.ilike.%${q}%,last_name.ilike.%${q}%,phone.ilike.%${q}%,card_number.ilike.%${q}%`
+    );
   }
+
+  const { data, error } = await query;
   if (error) throw error;
-  return ((data as unknown as PatientAdminItem[]) ?? []).map((p) => ({
+  return ((data as unknown as PatientRecord[]) ?? []).map((p) => ({
     ...p,
-    note: p.note ?? null,
+    age: ageFromDob(p.date_of_birth),
   }));
+}
+
+/** Jedan pacijent po id-u (sva polja). null ako ne postoji. */
+export async function fetchPatientById(
+  id: string
+): Promise<PatientRecord | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("patients")
+    .select(PATIENT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as unknown as PatientRecord) ?? null;
+}
+
+export interface PatientAppointmentItem {
+  id: string;
+  starts_at: string;
+  status: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
+  service: { name: string } | null;
+  doctor: { first_name: string | null; last_name: string | null } | null;
+}
+
+/** Istorija termina pacijenta (preko patient_record_id), najnoviji prvo. */
+export async function fetchPatientAppointments(
+  patientId: string
+): Promise<PatientAppointmentItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select(
+      `
+      id, starts_at, status,
+      service:services(name),
+      doctor:profiles!appointments_doctor_id_fkey(first_name, last_name)
+    `
+    )
+    .eq("patient_record_id", patientId)
+    .order("starts_at", { ascending: false });
+  if (error) throw error;
+  return (data as unknown as PatientAppointmentItem[]) ?? [];
 }
 
 export async function fetchAllChairs(): Promise<ChairAdminItem[]> {
