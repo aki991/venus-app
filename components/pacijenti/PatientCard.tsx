@@ -253,7 +253,7 @@ export function PatientCard({
         text="Anamneza, alergije i hronična stanja — uskoro."
       />
 
-      <Odontogram patientId={patient.id} readonly />
+      <Odontogram patientId={patient.id} />
 
       <PatientFormDialog
         open={editOpen}

@@ -20,12 +20,25 @@ function toothWidth(toothNumber: number): number {
 
 export interface ToothProps {
   toothNumber: number;
-  // Stanje po površini; prazno → sve 'zdrav' (O1). O2 popunjava iz baze.
-  conditions?: Partial<Record<ToothSurface, ToothCondition>>;
-  onSurfaceClick?: (toothNumber: number, surface: ToothSurface) => void;
+  // Površinska stanja po zoni (prazno → zdrav).
+  surfaces?: Partial<Record<ToothSurface, ToothCondition>>;
+  // Strukturno stanje celog zuba (boji sve zone); null → nema.
+  wholeTooth?: ToothCondition | null;
+  // Klik na zonu → koordinate kursora za pozicioniranje menija.
+  onSurfaceClick?: (
+    toothNumber: number,
+    surface: ToothSurface,
+    x: number,
+    y: number
+  ) => void;
 }
 
-export function Tooth({ toothNumber, conditions, onSurfaceClick }: ToothProps) {
+export function Tooth({
+  toothNumber,
+  surfaces,
+  wholeTooth = null,
+  onSurfaceClick,
+}: ToothProps) {
   // Mezijalno = ka središnjoj liniji. Za desne kvadrante (Q1 gore-desno,
   // Q4 dole-desno) mezijalno je na DESNOJ strani ćelije; inače na levoj.
   const quadrant = Math.floor(toothNumber / 10);
@@ -60,15 +73,14 @@ export function Tooth({ toothNumber, conditions, onSurfaceClick }: ToothProps) {
     },
   ];
 
+  // Strukturno stanje boji sve zone u svoju boju; inače boja zone po stanju.
   function colorFor(surface: ToothSurface): string {
-    const cond: ToothCondition = conditions?.[surface] ?? "zdrav";
+    const cond: ToothCondition = wholeTooth ?? surfaces?.[surface] ?? "zdrav";
     return TOOTH_CONDITION_CONFIG[cond].color;
   }
 
-  function handleClick(surface: ToothSurface) {
-    if (onSurfaceClick) onSurfaceClick(toothNumber, surface);
-    // O1: bez čuvanja — samo signal da je interaktivno (O2 aktivira izbor).
-    else console.log(`zub ${toothNumber} / ${surface}`);
+  function handleClick(surface: ToothSurface, x: number, y: number) {
+    onSurfaceClick?.(toothNumber, surface, x, y);
   }
 
   return (
@@ -88,9 +100,17 @@ export function Tooth({ toothNumber, conditions, onSurfaceClick }: ToothProps) {
           strokeLinejoin="round"
           style={{ fill: colorFor(z.surface), stroke: "var(--venus-tooth-line)" }}
           className="cursor-pointer transition-opacity hover:opacity-60"
-          onClick={() => handleClick(z.surface)}
+          onClick={(e) => handleClick(z.surface, e.clientX, e.clientY)}
         />
       ))}
+
+      {/* Izvađen zub: X preko cele ćelije (klik i dalje prolazi na zone ispod). */}
+      {wholeTooth === "izvadjen" && (
+        <g style={{ pointerEvents: "none" }} stroke="#1f1f1f" strokeWidth={2}>
+          <line x1={3} y1={3} x2={W - 3} y2={H - 3} />
+          <line x1={W - 3} y1={3} x2={3} y2={H - 3} />
+        </g>
+      )}
     </svg>
   );
 }

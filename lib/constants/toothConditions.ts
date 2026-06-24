@@ -25,6 +25,29 @@ export const TOOTH_SURFACES = [
 
 export type ToothSurface = (typeof TOOTH_SURFACES)[number];
 
+// DB površina uključuje i 'ceo_zub' (strukturna stanja se beleže na ceo zub).
+export type DbToothSurface = ToothSurface | "ceo_zub";
+
+// Površinska stanja — beleže se na konkretnu zonu (jednu od 5 površina).
+export const SURFACE_CONDITIONS = ["karijes", "plomba", "kanal"] as const;
+
+// Strukturna stanja — beleže se na CEO zub (surface = 'ceo_zub').
+export const STRUCTURAL_CONDITIONS = [
+  "kruna",
+  "most",
+  "implant",
+  "izvadjen",
+  "za_vadjenje",
+] as const;
+
+export function isStructuralCondition(c: ToothCondition): boolean {
+  return (STRUCTURAL_CONDITIONS as readonly string[]).includes(c);
+}
+
+export function isSurfaceCondition(c: ToothCondition): boolean {
+  return (SURFACE_CONDITIONS as readonly string[]).includes(c);
+}
+
 interface ToothConditionConfig {
   label: string;
   // Boja površine; 'zdrav' koristi token zuba (tema-svesno), ostalo hex.
