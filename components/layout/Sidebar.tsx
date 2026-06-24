@@ -31,7 +31,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/kalendar", label: "Kalendar", icon: Calendar, enabled: true },
-  { href: "/dnevnik", label: "Dnevnik", icon: FileText, enabled: false },
+  { href: "/dnevnik", label: "Dnevnik", icon: FileText, enabled: true },
   { href: "/racuni", label: "Računi", icon: Receipt, enabled: false },
   { href: "/usluge", label: "Usluge", icon: Stethoscope, enabled: false },
 ];
