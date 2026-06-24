@@ -55,6 +55,9 @@
   --venus-text-dim: #b8b09e;
   --venus-text-faint: #6b6557;
   --venus-danger: #c84545;
+  /* Odontogram — boja zdravog zuba i obrub površina */
+  --venus-tooth: #e9e3d4;
+  --venus-tooth-line: #a99d84;
 }
 
 .dark {
@@ -103,6 +106,8 @@
   --venus-text-dim: #5a5448;
   --venus-text-faint: #8a8474;
   --venus-danger: #b8392e;
+  --venus-tooth: #fbfaf6;
+  --venus-tooth-line: #cabfa8;
 }
 
 @theme inline {

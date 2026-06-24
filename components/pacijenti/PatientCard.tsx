@@ -14,6 +14,7 @@ import { deletePatientAction } from "@/lib/admin/patient-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PatientFormDialog } from "@/components/pacijenti/PatientFormDialog";
+import { Odontogram } from "@/components/odontogram/Odontogram";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -251,10 +252,8 @@ export function PatientCard({
         title="Medicinski karton"
         text="Anamneza, alergije i hronična stanja — uskoro."
       />
-      <PlaceholderSection
-        title="Odontogram"
-        text="Grafički prikaz zuba — uskoro."
-      />
+
+      <Odontogram patientId={patient.id} readonly />
 
       <PatientFormDialog
         open={editOpen}
