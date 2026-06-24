@@ -3,6 +3,10 @@ import { toast } from "sonner";
 
 import { fetchToothRecords, type ToothMap } from "@/lib/db/toothRecords";
 import {
+  applySetCondition,
+  applyRemoveCondition,
+} from "@/lib/odontogram/toothMap";
+import {
   setToothSurfaceAction,
   removeToothConditionAction,
 } from "@/lib/actions/tooth-actions";
@@ -45,20 +49,14 @@ export function useSetToothSurface(patientId: string) {
     onMutate: async (vars: SetVars) => {
       await qc.cancelQueries({ queryKey: key(patientId) });
       const prev = qc.getQueryData<ToothMap>(key(patientId));
-      qc.setQueryData<ToothMap>(key(patientId), (old) => {
-        const next: ToothMap = { ...(old ?? {}) };
-        const cur = next[vars.toothNumber] ?? { surfaces: {}, wholeTooth: null };
-        if (vars.surface === "ceo_zub") {
-          // Strukturno gazi sve površine.
-          next[vars.toothNumber] = { surfaces: {}, wholeTooth: vars.condition };
-        } else {
-          next[vars.toothNumber] = {
-            surfaces: { ...cur.surfaces, [vars.surface]: vars.condition },
-            wholeTooth: null,
-          };
-        }
-        return next;
-      });
+      qc.setQueryData<ToothMap>(key(patientId), (old) =>
+        applySetCondition(
+          old ?? {},
+          vars.toothNumber,
+          vars.surface,
+          vars.condition
+        )
+      );
       return { prev };
     },
     onError: (err, _vars, ctx) => {
@@ -91,19 +89,9 @@ export function useRemoveToothCondition(patientId: string) {
     onMutate: async (vars: RemoveVars) => {
       await qc.cancelQueries({ queryKey: key(patientId) });
       const prev = qc.getQueryData<ToothMap>(key(patientId));
-      qc.setQueryData<ToothMap>(key(patientId), (old) => {
-        const next: ToothMap = { ...(old ?? {}) };
-        const cur = next[vars.toothNumber];
-        if (!cur) return next;
-        if (vars.surface === "ceo_zub") {
-          delete next[vars.toothNumber]; // reset celog zuba
-        } else {
-          const surfaces = { ...cur.surfaces };
-          delete surfaces[vars.surface];
-          next[vars.toothNumber] = { surfaces, wholeTooth: cur.wholeTooth };
-        }
-        return next;
-      });
+      qc.setQueryData<ToothMap>(key(patientId), (old) =>
+        applyRemoveCondition(old ?? {}, vars.toothNumber, vars.surface)
+      );
       return { prev };
     },
     onError: (err, _vars, ctx) => {

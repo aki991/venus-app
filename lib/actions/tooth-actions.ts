@@ -11,6 +11,7 @@ import {
   type ToothCondition,
   type DbToothSurface,
 } from "@/lib/constants/toothConditions";
+import type { ToothRecordDraft } from "@/lib/odontogram/toothMap";
 import type { ActionResult } from "@/lib/admin/types";
 
 const SURFACE_SET = new Set<string>(SURFACE_CONDITIONS);
@@ -88,6 +89,60 @@ export async function setToothSurfaceAction(
       // 'zdrav' ide kroz removeToothConditionAction, ne ovde.
       return { error: "Nepoznato ili nedozvoljeno stanje" };
     }
+
+    revalidatePath(`/pacijenti/${patientId}`);
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Greška" };
+  }
+}
+
+/**
+ * Batch upis skice na (obično novog) pacijenta. Validira svaki zapis (površina
+ * vs ceo_zub) i upiše sve odjednom (upsert). Koristi /odontogram „Dodaj" tok:
+ * gost skica → tooth_records novog pacijenta.
+ */
+export async function saveToothRecordsBatchAction(
+  patientId: string,
+  records: ToothRecordDraft[]
+): Promise<ActionResult> {
+  try {
+    const user = await requireStaffAction();
+    if (records.length === 0) return { success: true }; // prazna skica → OK
+
+    for (const r of records) {
+      if (STRUCT_SET.has(r.condition)) {
+        if (r.surface !== "ceo_zub") {
+          return {
+            error: `Strukturno stanje mora na ceo zub (zub ${r.tooth_number})`,
+          };
+        }
+      } else if (SURFACE_SET.has(r.condition)) {
+        if (!ZONE_SET.has(r.surface)) {
+          return {
+            error: `Površinsko stanje zahteva zonu (zub ${r.tooth_number})`,
+          };
+        }
+      } else {
+        return { error: "Nedozvoljeno stanje u skici" };
+      }
+    }
+
+    const supabase = await createClient();
+    const now = new Date().toISOString();
+    const rows = records.map((r) => ({
+      patient_id: patientId,
+      tooth_number: r.tooth_number,
+      surface: r.surface,
+      condition: r.condition,
+      recorded_by: user.id,
+      recorded_at: now,
+    }));
+
+    const { error } = await supabase
+      .from("tooth_records")
+      .upsert(rows, { onConflict: "patient_id,tooth_number,surface" });
+    if (error) return { error: error.message };
 
     revalidatePath(`/pacijenti/${patientId}`);
     return { success: true };

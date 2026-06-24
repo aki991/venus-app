@@ -31,6 +31,9 @@ export interface ToothProps {
     x: number,
     y: number
   ) => void;
+  // Vizuelno uvećanje (npr. 1.6 na radnom stolu). Geometrija ostaje ista
+  // (viewBox), skalira se samo prikazana veličina → ostaje vektorski oštro.
+  scale?: number;
 }
 
 export function Tooth({
@@ -38,6 +41,7 @@ export function Tooth({
   surfaces,
   wholeTooth = null,
   onSurfaceClick,
+  scale = 1,
 }: ToothProps) {
   // Mezijalno = ka središnjoj liniji. Za desne kvadrante (Q1 gore-desno,
   // Q4 dole-desno) mezijalno je na DESNOJ strani ćelije; inače na levoj.
@@ -85,8 +89,8 @@ export function Tooth({
 
   return (
     <svg
-      width={W}
-      height={H}
+      width={W * scale}
+      height={H * scale}
       viewBox={`0 0 ${W} ${H}`}
       className="block"
       role="img"
