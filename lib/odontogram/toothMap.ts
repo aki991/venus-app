@@ -1,7 +1,7 @@
 import type { ToothMap } from "@/lib/db/toothRecords";
 import type {
   ToothCondition,
-  ToothSurface,
+  ToothZone,
   DbToothSurface,
 } from "@/lib/constants/toothConditions";
 
@@ -71,7 +71,7 @@ export function applyRemoveCondition(
     delete next[toothNumber]; // reset celog zuba
   } else {
     const surfaces = { ...cur.surfaces };
-    delete surfaces[surface as ToothSurface];
+    delete surfaces[surface as ToothZone];
     next[toothNumber] = { surfaces, wholeTooth: cur.wholeTooth };
   }
   return next;

@@ -25,11 +25,23 @@ export const TOOTH_SURFACES = [
 
 export type ToothSurface = (typeof TOOTH_SURFACES)[number];
 
-// DB površina uključuje i 'ceo_zub' (strukturna stanja se beleže na ceo zub).
-export type DbToothSurface = ToothSurface | "ceo_zub";
+// Anatomske zone klikabilnog zuba (kruna + koren) — odvojene od 5 zona kvadrata.
+// Kruna nudi površinska stanja (kao kvadrat), koren endodontska (kanal/vađenje).
+export const ANATOMY_SURFACES = ["kruna", "koren"] as const;
+export type AnatomySurface = (typeof ANATOMY_SURFACES)[number];
 
-// Površinska stanja — beleže se na konkretnu zonu (jednu od 5 površina).
+// Sve zone koje nose stanje "po zoni" (5 kvadrat + 2 anatomske); bez 'ceo_zub'.
+export type ToothZone = ToothSurface | AnatomySurface;
+
+// DB površina: zona (kvadrat ili anatomska) ili 'ceo_zub' (strukturna stanja).
+export type DbToothSurface = ToothZone | "ceo_zub";
+
+// Površinska stanja — beleže se na konkretnu zonu (jednu od 5 površina ili krunu).
 export const SURFACE_CONDITIONS = ["karijes", "plomba", "kanal"] as const;
+
+// Endodontska stanja koja nudi KOREN (anatomska zona). 'za_vadjenje' ovde je
+// oznaka NA KORENU — semantički različito od strukturnog 'za_vadjenje' (ceo_zub).
+export const ROOT_CONDITIONS = ["kanal", "za_vadjenje"] as const;
 
 // Strukturna stanja — beleže se na CEO zub (surface = 'ceo_zub').
 export const STRUCTURAL_CONDITIONS = [
@@ -46,6 +58,32 @@ export function isStructuralCondition(c: ToothCondition): boolean {
 
 export function isSurfaceCondition(c: ToothCondition): boolean {
   return (SURFACE_CONDITIONS as readonly string[]).includes(c);
+}
+
+const _SURFACE_SET = new Set<string>(SURFACE_CONDITIONS);
+const _STRUCT_SET = new Set<string>(STRUCTURAL_CONDITIONS);
+const _ROOT_SET = new Set<string>(ROOT_CONDITIONS);
+const _ZONE_SET = new Set<string>(TOOTH_SURFACES); // 5 zona kvadrata (bez ceo_zub)
+
+/**
+ * Validacija (surface, condition) para — JEDAN izvor istine za auto-save i batch.
+ * Ključna distinkcija: značenje stanja zavisi od SURFACE kolone, ne od condition-a:
+ *  - 'ceo_zub'        → strukturno stanje celog zuba (kruna-nadoknada/most/implant/
+ *                       izvadjen/za_vadjenje). Ovde 'kruna' = krunica (nadoknada).
+ *  - 'kruna' (zona)   → površinsko stanje anatomske krune (karijes/plomba/kanal),
+ *                       kao i kvadrat. NIJE isto što i strukturna 'kruna'-nadoknada.
+ *  - 'koren' (zona)   → endodontsko stanje korena (kanal, za_vadjenje).
+ *  - 5 zona kvadrata  → površinska stanja.
+ */
+export function isValidToothRecord(
+  surface: DbToothSurface,
+  condition: ToothCondition
+): boolean {
+  if (surface === "ceo_zub") return _STRUCT_SET.has(condition);
+  if (surface === "koren") return _ROOT_SET.has(condition);
+  if (surface === "kruna") return _SURFACE_SET.has(condition);
+  if (_ZONE_SET.has(surface)) return _SURFACE_SET.has(condition);
+  return false;
 }
 
 interface ToothConditionConfig {

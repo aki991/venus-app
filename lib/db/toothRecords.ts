@@ -1,7 +1,7 @@
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import type {
   ToothCondition,
-  ToothSurface,
+  ToothZone,
   DbToothSurface,
 } from "@/lib/constants/toothConditions";
 
@@ -13,10 +13,10 @@ export interface ToothRecord {
   note: string | null;
 }
 
-// Stanje jednog zuba za render: površinska stanja po zoni + (opciono) strukturno
-// stanje celog zuba.
+// Stanje jednog zuba za render: stanja po zoni (5 zona kvadrata + anatomska
+// 'kruna'/'koren') + (opciono) strukturno stanje celog zuba.
 export interface ToothState {
-  surfaces: Partial<Record<ToothSurface, ToothCondition>>;
+  surfaces: Partial<Record<ToothZone, ToothCondition>>;
   wholeTooth: ToothCondition | null;
 }
 
@@ -41,7 +41,7 @@ export async function fetchToothRecords(patientId: string): Promise<ToothMap> {
     if (r.surface === "ceo_zub") {
       entry.wholeTooth = r.condition;
     } else {
-      entry.surfaces[r.surface as ToothSurface] = r.condition;
+      entry.surfaces[r.surface as ToothZone] = r.condition;
     }
     map[r.tooth_number] = entry;
   }

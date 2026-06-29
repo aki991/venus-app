@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import {
   SURFACE_CONDITIONS,
   STRUCTURAL_CONDITIONS,
+  ROOT_CONDITIONS,
   TOOTH_CONDITION_CONFIG,
   type ToothCondition,
 } from "@/lib/constants/toothConditions";
@@ -18,6 +19,7 @@ export function ToothConditionMenu({
   x,
   y,
   hasWholeTooth,
+  mode = "full",
   onSelect,
   onReset,
   onClose,
@@ -26,6 +28,9 @@ export function ToothConditionMenu({
   x: number;
   y: number;
   hasWholeTooth: boolean;
+  // "full" → kvadrat/kruna (površinska + strukturna stanja).
+  // "root" → koren (samo endodontska: kanal, za_vadjenje).
+  mode?: "full" | "root";
   onSelect: (condition: ToothCondition) => void;
   onReset: () => void;
   onClose: () => void;
@@ -54,26 +59,43 @@ export function ToothConditionMenu({
       >
         <p className="px-2 py-1 text-xs font-semibold text-venus-text">
           Zub {toothNumber}
+          {mode === "root" && (
+            <span className="ml-1 font-normal text-venus-text-faint">· koren</span>
+          )}
         </p>
 
-        {/* Površinska stanja — samo ako zub NEMA strukturno stanje */}
-        {!hasWholeTooth && (
+        {mode === "root" ? (
+          // Koren: samo endodontska stanja (kanal, za_vadjenje).
           <>
             <p className="px-2 pt-1.5 text-[10px] uppercase tracking-wider text-venus-text-faint">
-              Površina
+              Koren
             </p>
-            {SURFACE_CONDITIONS.map((c) => (
+            {ROOT_CONDITIONS.map((c) => (
+              <MenuItem key={c} condition={c} onSelect={onSelect} />
+            ))}
+          </>
+        ) : (
+          <>
+            {/* Površinska stanja — samo ako zub NEMA strukturno stanje */}
+            {!hasWholeTooth && (
+              <>
+                <p className="px-2 pt-1.5 text-[10px] uppercase tracking-wider text-venus-text-faint">
+                  Površina
+                </p>
+                {SURFACE_CONDITIONS.map((c) => (
+                  <MenuItem key={c} condition={c} onSelect={onSelect} />
+                ))}
+              </>
+            )}
+
+            <p className="px-2 pt-1.5 text-[10px] uppercase tracking-wider text-venus-text-faint">
+              Ceo zub
+            </p>
+            {STRUCTURAL_CONDITIONS.map((c) => (
               <MenuItem key={c} condition={c} onSelect={onSelect} />
             ))}
           </>
         )}
-
-        <p className="px-2 pt-1.5 text-[10px] uppercase tracking-wider text-venus-text-faint">
-          Ceo zub
-        </p>
-        {STRUCTURAL_CONDITIONS.map((c) => (
-          <MenuItem key={c} condition={c} onSelect={onSelect} />
-        ))}
 
         <button
           type="button"

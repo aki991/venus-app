@@ -11,9 +11,13 @@ import {
   isStructuralCondition,
   type ToothCondition,
   type ToothSurface,
+  type AnatomySurface,
   type DbToothSurface,
 } from "@/lib/constants/toothConditions";
 import type { ToothMap } from "@/lib/db/toothRecords";
+
+// Zona koja se može kliknuti: 5 zona kvadrata + anatomska kruna/koren.
+type ClickZone = ToothSurface | AnatomySurface;
 
 // FDI raspored. Gornji red: 18→11 | 21→28. Donji red: 48→41 | 31→38.
 const UPPER_ROW = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -21,7 +25,7 @@ const LOWER_ROW = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 3
 
 interface MenuState {
   toothNumber: number;
-  surface: ToothSurface;
+  surface: ClickZone;
   x: number;
   y: number;
 }
@@ -30,16 +34,16 @@ function ToothRow({
   numbers,
   numbersOn,
   map,
-  onSurfaceClick,
+  onZoneClick,
   scale,
   large,
 }: {
   numbers: number[];
   numbersOn: "top" | "bottom";
   map: ToothMap;
-  onSurfaceClick: (
+  onZoneClick: (
     toothNumber: number,
-    surface: ToothSurface,
+    surface: ClickZone,
     x: number,
     y: number
   ) => void;
@@ -65,6 +69,8 @@ function ToothRow({
               width={w}
               position="top"
               scale={scale}
+              state={map[n]}
+              onZoneClick={onZoneClick}
             />
             <span className={numberCls}>{n}</span>
           </>
@@ -73,7 +79,7 @@ function ToothRow({
           toothNumber={n}
           surfaces={map[n]?.surfaces}
           wholeTooth={map[n]?.wholeTooth ?? null}
-          onSurfaceClick={onSurfaceClick}
+          onSurfaceClick={onZoneClick}
           scale={scale}
         />
         {numbersOn === "bottom" && (
@@ -84,6 +90,8 @@ function ToothRow({
               width={w}
               position="bottom"
               scale={scale}
+              state={map[n]}
+              onZoneClick={onZoneClick}
             />
           </>
         )}
@@ -129,7 +137,7 @@ export function OdontogramView({
 
   function openMenu(
     toothNumber: number,
-    surface: ToothSurface,
+    surface: ClickZone,
     x: number,
     y: number
   ) {
@@ -138,9 +146,15 @@ export function OdontogramView({
 
   function handleSelect(condition: ToothCondition) {
     if (!menu) return;
-    if (isStructuralCondition(condition)) {
+    if (menu.surface === "koren") {
+      // Koren: endodontska stanja ostaju NA KORENU (i 'za_vadjenje' je zonsko,
+      // ne strukturno — vidi isValidToothRecord).
+      onSetCondition(menu.toothNumber, "koren", condition);
+    } else if (isStructuralCondition(condition)) {
+      // Strukturno (uklj. 'kruna' kao nadoknada) → ceo zub (sinhrono sa kvadratom).
       onSetCondition(menu.toothNumber, "ceo_zub", condition);
     } else {
+      // Površinsko → konkretna zona (kvadrat ili anatomska 'kruna').
       onSetCondition(menu.toothNumber, menu.surface, condition);
     }
     setMenu(null);
@@ -172,7 +186,7 @@ export function OdontogramView({
             numbers={UPPER_ROW}
             numbersOn="top"
             map={map}
-            onSurfaceClick={openMenu}
+            onZoneClick={openMenu}
             scale={scale}
             large={large}
           />
@@ -180,7 +194,7 @@ export function OdontogramView({
             numbers={LOWER_ROW}
             numbersOn="bottom"
             map={map}
-            onSurfaceClick={openMenu}
+            onZoneClick={openMenu}
             scale={scale}
             large={large}
           />
@@ -195,6 +209,7 @@ export function OdontogramView({
           x={menu.x}
           y={menu.y}
           hasWholeTooth={!!map[menu.toothNumber]?.wholeTooth}
+          mode={menu.surface === "koren" ? "root" : "full"}
           onSelect={handleSelect}
           onReset={handleReset}
           onClose={() => setMenu(null)}
