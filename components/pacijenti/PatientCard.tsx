@@ -14,6 +14,9 @@ import { deletePatientAction } from "@/lib/admin/patient-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PatientFormDialog } from "@/components/pacijenti/PatientFormDialog";
+import { MedicalAlert } from "@/components/pacijenti/MedicalAlert";
+import { MedicalCard } from "@/components/pacijenti/MedicalCard";
+import { ProcedureProtocol } from "@/components/pacijenti/ProcedureProtocol";
 import { Odontogram } from "@/components/odontogram/Odontogram";
 import {
   AlertDialog,
@@ -85,27 +88,11 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-venus-border bg-venus-surface p-5">
+    <section className="rounded-xl border border-venus-border bg-venus-canvas p-5">
       <h2 className="mb-4 font-serif text-lg font-semibold text-venus-text">
         {title}
       </h2>
       {children}
-    </section>
-  );
-}
-
-function PlaceholderSection({ title, text }: { title: string; text: string }) {
-  return (
-    <section className="rounded-xl border border-dashed border-venus-border bg-venus-surface/50 p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-serif text-lg font-semibold text-venus-text-dim">
-          {title}
-        </h2>
-        <Badge className="border-transparent bg-zinc-700/40 text-zinc-400">
-          Uskoro
-        </Badge>
-      </div>
-      <p className="mt-2 text-sm text-venus-text-faint">{text}</p>
     </section>
   );
 }
@@ -183,6 +170,9 @@ export function PatientCard({
         </div>
       </div>
 
+      {/* Kritična medicinska upozorenja (crveni baner) — samo ako ih ima */}
+      <MedicalAlert patientId={patient.id} />
+
       {/* Lični podaci */}
       <Section title="Lični podaci">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -247,13 +237,13 @@ export function PatientCard({
         )}
       </Section>
 
-      {/* Placeholder sekcije za naredne faze */}
-      <PlaceholderSection
-        title="Medicinski karton"
-        text="Anamneza, alergije i hronična stanja — uskoro."
-      />
+      {/* Medicinski karton */}
+      <MedicalCard patientId={patient.id} />
 
       <Odontogram patientId={patient.id} />
+
+      {/* Protokol intervencija — hronologija (auto iz odontograma + ručno) */}
+      <ProcedureProtocol patientId={patient.id} />
 
       <PatientFormDialog
         open={editOpen}

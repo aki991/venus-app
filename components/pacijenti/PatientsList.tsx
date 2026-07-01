@@ -76,7 +76,7 @@ export function PatientsList({ patients }: { patients: PatientListItem[] }) {
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-venus-text-faint"
           />
           <Input
-            className="pl-9"
+            className="border-venus-border bg-venus-canvas pl-9 dark:bg-venus-canvas"
             placeholder="Pretraži po imenu, telefonu ili broju kartona..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -84,7 +84,7 @@ export function PatientsList({ patients }: { patients: PatientListItem[] }) {
         </div>
 
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-          <SelectTrigger className="w-[170px]">
+          <SelectTrigger className="w-[170px] border-venus-border bg-venus-canvas dark:bg-venus-canvas dark:hover:bg-venus-canvas">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -99,27 +99,27 @@ export function PatientsList({ patients }: { patients: PatientListItem[] }) {
         </Button>
       </div>
 
-      {/* Spisak */}
-      <div className="overflow-hidden rounded-xl border border-venus-border bg-venus-surface">
-        <div className="grid grid-cols-[2.5fr_1fr_0.8fr_1.3fr_1fr] gap-4 border-b border-venus-border px-4 py-3 text-xs font-semibold uppercase tracking-wider text-venus-text-dim">
-          <span>Pacijent</span>
-          <span>Karton #</span>
-          <span>Godine</span>
-          <span>Telefon</span>
-          <span>Status</span>
-        </div>
+      {/* Spisak — odvojene kartice na crnoj podlozi (kao Usluge) */}
+      <div className="grid grid-cols-[2.5fr_1fr_0.8fr_1.3fr_1fr] gap-4 px-4 pb-2 text-xs font-semibold uppercase tracking-wider text-venus-text-dim">
+        <span>Pacijent</span>
+        <span>Karton #</span>
+        <span>Godine</span>
+        <span>Telefon</span>
+        <span>Status</span>
+      </div>
 
-        {visible.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-venus-text-faint">
-            {query.trim() ? "Nema rezultata." : "Još nema pacijenata."}
-          </div>
-        ) : (
-          visible.map((p) => (
+      {visible.length === 0 ? (
+        <div className="rounded-xl border border-venus-border bg-venus-canvas px-4 py-10 text-center text-sm text-venus-text-faint">
+          {query.trim() ? "Nema rezultata." : "Još nema pacijenata."}
+        </div>
+      ) : (
+        <div className="grid gap-2">
+          {visible.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => router.push(`/pacijenti/${p.id}`)}
-              className="grid w-full grid-cols-[2.5fr_1fr_0.8fr_1.3fr_1fr] items-center gap-4 border-b border-venus-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-venus-surface-2"
+              className="grid w-full grid-cols-[2.5fr_1fr_0.8fr_1.3fr_1fr] items-center gap-4 rounded-xl border border-venus-border bg-venus-canvas px-4 py-3 text-left transition-colors hover:bg-venus-surface-2"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <span
@@ -149,9 +149,9 @@ export function PatientsList({ patients }: { patients: PatientListItem[] }) {
                 </Badge>
               </span>
             </button>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <PatientFormDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

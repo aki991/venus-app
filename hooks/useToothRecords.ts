@@ -10,6 +10,7 @@ import {
   setToothSurfaceAction,
   removeToothConditionAction,
 } from "@/lib/actions/tooth-actions";
+import { proceduresKey } from "@/hooks/useToothProcedures";
 import type {
   ToothCondition,
   DbToothSurface,
@@ -65,6 +66,8 @@ export function useSetToothSurface(patientId: string) {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: key(patientId) });
+      // Auto-protokol se možda upisao uz stanje → osveži i protokol tabelu.
+      qc.invalidateQueries({ queryKey: proceduresKey(patientId) });
     },
   });
 }

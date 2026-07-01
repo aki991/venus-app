@@ -168,7 +168,7 @@ export function OdontogramView({
   }
 
   return (
-    <section className="rounded-xl border border-venus-border bg-venus-surface p-5">
+    <section className="rounded-xl border border-venus-border bg-venus-canvas p-5">
       {showHeader && (
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-serif text-lg font-semibold text-venus-text">

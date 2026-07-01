@@ -209,7 +209,7 @@ export function OdontogramWorkdesk() {
 
       <div className="grid gap-5">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-venus-border bg-venus-surface px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-venus-border bg-venus-canvas px-5 py-4">
           {active ? (
             <>
               <div>

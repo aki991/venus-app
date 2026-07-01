@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffAction } from "@/lib/admin/guard";
+import { createAutoProcedureAction } from "@/lib/actions/tooth-procedure-actions";
 import {
   isValidToothRecord,
   type ToothCondition,
@@ -69,6 +70,16 @@ export async function setToothSurfaceAction(
       { onConflict: "patient_id,tooth_number,surface" }
     );
     if (up.error) return { error: up.error.message };
+
+    // Auto-protokol (BONUS): klinički relevantno stanje → red u tooth_procedures.
+    // Sme da padne bez posledica — stanje je već sačuvano gore. Gost mod ovuda
+    // ne prolazi (setToothSurfaceAction se zove samo za pravog pacijenta), a i
+    // sama akcija tiho preskoči prazan patientId / 'zdrav'.
+    try {
+      await createAutoProcedureAction(patientId, toothNumber, condition, user.id);
+    } catch {
+      // ignore — čuvanje stanja mora da uspe svejedno
+    }
 
     revalidatePath(`/pacijenti/${patientId}`);
     return { success: true };
