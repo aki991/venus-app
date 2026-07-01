@@ -6,8 +6,12 @@ export interface AppointmentWithRelations {
   ends_at: string;
   status: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
   notes: string | null;
+  // TRUE dok AI-termin čeka da pacijent preko WhatsApp-a odgovori na predlog
+  // novog termina. Doktorska akcija nad statusom (potvrda/otkazivanje) ga čisti.
+  awaiting_response: boolean | null;
   doctor_id: string | null;
   patient_id: string | null;
+  patient_record_id: string | null;
   chair_id: string | null;
   walk_in_name: string | null;
   walk_in_phone: string | null;
@@ -20,12 +24,80 @@ export interface AppointmentWithRelations {
     initials: string | null;
     color_hex: string | null;
   } | null;
+  // Legacy mobilni pacijent (profiles preko patient_id)
   patient: {
     id: string;
     first_name: string | null;
     last_name: string | null;
     phone: string | null;
   } | null;
+  // Pacijent iz registra (patients preko patient_record_id) — primarni izvor imena
+  patient_record: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    card_number: string | null;
+  } | null;
+}
+
+/**
+ * Razrešava identitet pacijenta na terminu iz 3 izvora, po prioritetu:
+ *   1. patient_record (registar, patient_record_id)
+ *   2. patient (legacy mobilni nalog, patient_id → profiles)
+ *   3. walk-in (walk_in_name / walk_in_phone)
+ * `name` je "" kad nema nijednog izvora — pozivalac bira svoj fallback ("—" / "Walk-in").
+ */
+export interface ResolvedPatient {
+  name: string;
+  phone: string | null;
+  cardNumber: string | null;
+  source: "record" | "profile" | "walk_in" | "none";
+}
+
+export function resolvePatient(appt: {
+  patient_record?: AppointmentWithRelations["patient_record"];
+  patient?: AppointmentWithRelations["patient"];
+  walk_in_name?: string | null;
+  walk_in_phone?: string | null;
+}): ResolvedPatient {
+  const join = (
+    first: string | null,
+    last: string | null
+  ): string => [first, last].filter(Boolean).join(" ") || "Bez imena";
+
+  if (appt.patient_record) {
+    return {
+      name: join(appt.patient_record.first_name, appt.patient_record.last_name),
+      phone: appt.patient_record.phone,
+      cardNumber: appt.patient_record.card_number,
+      source: "record",
+    };
+  }
+  if (appt.patient) {
+    return {
+      name: join(appt.patient.first_name, appt.patient.last_name),
+      phone: appt.patient.phone,
+      cardNumber: null,
+      source: "profile",
+    };
+  }
+  if (appt.walk_in_name) {
+    return {
+      name: appt.walk_in_name,
+      phone: appt.walk_in_phone ?? null,
+      cardNumber: null,
+      source: "walk_in",
+    };
+  }
+  return { name: "", phone: null, cardNumber: null, source: "none" };
+}
+
+/** Skraćenica kad treba samo ime. */
+export function resolvePatientName(
+  appt: Parameters<typeof resolvePatient>[0]
+): string {
+  return resolvePatient(appt).name;
 }
 
 export async function fetchAppointmentsForWeek(
@@ -39,12 +111,13 @@ export async function fetchAppointmentsForWeek(
     .from("appointments")
     .select(
       `
-      id, starts_at, ends_at, status, notes, doctor_id, patient_id, chair_id,
+      id, starts_at, ends_at, status, notes, awaiting_response, doctor_id, patient_id, patient_record_id, chair_id,
       walk_in_name, walk_in_phone,
       service:services(id, name, duration_minutes),
       chair:chairs(id, name),
       doctor:profiles!appointments_doctor_id_fkey(id, first_name, last_name, initials, color_hex),
-      patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone)
+      patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone),
+      patient_record:patients!patient_record_id(id, first_name, last_name, phone, card_number)
     `
     )
     .gte("starts_at", weekStart.toISOString())
@@ -69,8 +142,11 @@ export interface CreateAppointmentInput {
   ends_at: string; // ISO
   status: "pending" | "confirmed";
   notes: string | null;
-  // pacijent — JEDNO od ova dva mora biti popunjeno (CHECK patient_or_walkin)
+  // pacijent — identitet (CHECK patient_or_walkin: patient_id ILI
+  // patient_record_id ILI walk-in). Za registar: patient_record_id = patients.id,
+  // patient_id = patients.profile_id (ako pacijent ima mobilni nalog, inače null).
   patient_id: string | null;
+  patient_record_id: string | null;
   walk_in_name: string | null;
   walk_in_phone: string | null;
 }
@@ -132,9 +208,19 @@ export async function updateAppointment(
 ) {
   const supabase = createBrowserClient();
 
+  // Kad doktor menja STATUS termina (npr. pending -> confirmed / completed /
+  // no_show), zajedno sa statusom čistimo "čeka odgovor" flag — pacijent više
+  // nije zaključan u DA/NE režimu preko WhatsApp-a. Promena samo vremena
+  // (starts_at/ends_at bez status-a) NE dira flag: to namerno okida novi predlog
+  // pacijentu.
+  const clearAwaiting =
+    input.status !== undefined
+      ? { awaiting_response: false, awaiting_since: null }
+      : {};
+
   const { data, error } = await supabase
     .from("appointments")
-    .update({ ...input, updated_at: new Date().toISOString() })
+    .update({ ...input, ...clearAwaiting, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select("id")
     .single();
@@ -160,6 +246,10 @@ export async function cancelAppointment(id: string, reason: string | null) {
       cancelled_at: new Date().toISOString(),
       cancelled_by: user?.id,
       cancellation_reason: reason,
+      // Otkazivanje je doktorska odluka nad terminom → oslobodi pacijenta iz
+      // DA/NE režima preko WhatsApp-a.
+      awaiting_response: false,
+      awaiting_since: null,
     })
     .eq("id", id);
 

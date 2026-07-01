@@ -12,6 +12,8 @@ import {
 } from "@/lib/validations/appointment";
 import type { PatientSearchResult } from "@/lib/db/patients";
 import { appointmentErrorMessage } from "@/lib/db/appointments";
+import { createPatientAction } from "@/lib/admin/patient-actions";
+import { minimalPatientInput } from "@/lib/validations/patient";
 import { useDoctors } from "@/hooks/useDoctors";
 import { useServices } from "@/hooks/useServices";
 import { useChairs } from "@/hooks/useChairs";
@@ -75,8 +77,10 @@ function buildDefaults(
     notes: null,
     patient_mode: "existing",
     patient_id: null,
-    walk_in_name: null,
+    walk_in_first_name: null,
+    walk_in_last_name: null,
     walk_in_phone: null,
+    add_to_registry: false,
   };
 }
 
@@ -131,7 +135,44 @@ export function NewAppointmentModal({
     const startsAt = toISO(values.date, values.time);
     const endsAt = addMinutesISO(startsAt, values.duration_minutes);
 
+    const isExisting = values.patient_mode === "existing";
+
     try {
+      // Identitet pacijenta na terminu.
+      let patientRecordId: string | null = null;
+      let patientId: string | null = null;
+      let walkInName: string | null = null;
+      let walkInPhone: string | null = null;
+
+      if (isExisting) {
+        // Registar: patient_record_id = patients.id (UVEK), patient_id =
+        // profile_id (samo ako pacijent ima mobilni nalog, inače null).
+        patientRecordId = selectedPatient?.id ?? null;
+        patientId = selectedPatient?.profile_id ?? null;
+      } else if (values.add_to_registry) {
+        // Walk-in + "Dodaj u registar": prvo kreiraj pacijenta, pa veži termin
+        // preko patient_record_id (bez walk_in polja).
+        const created = await createPatientAction(
+          minimalPatientInput(
+            values.walk_in_first_name ?? "",
+            values.walk_in_last_name ?? "",
+            values.walk_in_phone ?? null
+          )
+        );
+        if ("error" in created) {
+          toast.error(created.error);
+          return;
+        }
+        patientRecordId = created.patientId;
+      } else {
+        // Čist walk-in: spoji ime + prezime u postojeću walk_in_name kolonu.
+        walkInName = [values.walk_in_first_name, values.walk_in_last_name]
+          .map((s) => s?.trim())
+          .filter(Boolean)
+          .join(" ");
+        walkInPhone = values.walk_in_phone;
+      }
+
       await createMutation.mutateAsync({
         doctor_id: values.doctor_id,
         service_id: values.service_id,
@@ -140,12 +181,10 @@ export function NewAppointmentModal({
         ends_at: endsAt,
         status: values.status,
         notes: values.notes,
-        patient_id:
-          values.patient_mode === "existing" ? values.patient_id : null,
-        walk_in_name:
-          values.patient_mode === "walk_in" ? values.walk_in_name : null,
-        walk_in_phone:
-          values.patient_mode === "walk_in" ? values.walk_in_phone : null,
+        patient_record_id: patientRecordId,
+        patient_id: patientId,
+        walk_in_name: walkInName,
+        walk_in_phone: walkInPhone,
       });
       toast.success("Termin zakazan");
       onClose();
@@ -190,13 +229,25 @@ export function NewAppointmentModal({
                         shouldValidate: true,
                       });
                     }}
-                    walkInName={form.watch("walk_in_name") ?? ""}
+                    walkInFirstName={form.watch("walk_in_first_name") ?? ""}
+                    walkInLastName={form.watch("walk_in_last_name") ?? ""}
                     walkInPhone={form.watch("walk_in_phone") ?? ""}
-                    onWalkInNameChange={(v) =>
-                      form.setValue("walk_in_name", v, { shouldValidate: true })
+                    onWalkInFirstNameChange={(v) =>
+                      form.setValue("walk_in_first_name", v, {
+                        shouldValidate: true,
+                      })
+                    }
+                    onWalkInLastNameChange={(v) =>
+                      form.setValue("walk_in_last_name", v, {
+                        shouldValidate: true,
+                      })
                     }
                     onWalkInPhoneChange={(v) =>
                       form.setValue("walk_in_phone", v, { shouldValidate: true })
+                    }
+                    addToRegistry={form.watch("add_to_registry")}
+                    onAddToRegistryChange={(v) =>
+                      form.setValue("add_to_registry", v)
                     }
                     selectedLabel={
                       selectedPatient

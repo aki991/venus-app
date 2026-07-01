@@ -1,9 +1,13 @@
 "use client";
 
 import { parseISO, format } from "date-fns";
+import { MessageCircleQuestion } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { AppointmentWithRelations } from "@/lib/db/appointments";
+import {
+  resolvePatientName,
+  type AppointmentWithRelations,
+} from "@/lib/db/appointments";
 import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
 import {
   STATUS_CONFIG,
@@ -44,11 +48,8 @@ export function AppointmentBlock({
   const StatusIcon = statusCfg.icon;
   const showStatusIcon = status !== "confirmed";
 
-  const patientName = appointment.patient
-    ? [appointment.patient.first_name, appointment.patient.last_name]
-        .filter(Boolean)
-        .join(" ")
-    : appointment.walk_in_name;
+  // Ime se razrešava iz registra → legacy profila → walk-in (resolvePatientName).
+  const patientName = resolvePatientName(appointment);
 
   return (
     <button
@@ -114,6 +115,13 @@ export function AppointmentBlock({
           <span className="text-[14px] font-semibold text-venus-text-dim">
             {format(parseISO(appointment.starts_at), "HH:mm")}
           </span>
+          {appointment.awaiting_response && (
+            <MessageCircleQuestion
+              size={13}
+              className="shrink-0 text-amber-500"
+              aria-label="Čeka odgovor pacijenta"
+            />
+          )}
           {showStatusIcon && (
             <StatusIcon
               size={13}

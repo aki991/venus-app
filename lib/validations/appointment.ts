@@ -20,16 +20,24 @@ export const appointmentSchema = z
     // pacijent mode
     patient_mode: z.enum(["existing", "walk_in"]),
     patient_id: z.string().uuid().nullable(),
-    walk_in_name: z.string().nullable(),
+    // walk-in: ime/prezime odvojeno (spaja se u walk_in_name kolonu, ili se
+    // koristi za kreiranje pacijenta ako je add_to_registry uključen)
+    walk_in_first_name: z.string().nullable(),
+    walk_in_last_name: z.string().nullable(),
     walk_in_phone: z.string().nullable(),
+    add_to_registry: z.boolean(),
   })
   .refine(
     (data) => {
       if (data.patient_mode === "existing") return !!data.patient_id;
-      return !!data.walk_in_name && !!data.walk_in_phone;
+      return (
+        !!data.walk_in_first_name?.trim() &&
+        !!data.walk_in_last_name?.trim() &&
+        !!data.walk_in_phone?.trim()
+      );
     },
     {
-      message: "Izaberite pacijenta ili unesite ime i telefon",
+      message: "Izaberite pacijenta ili unesite ime, prezime i telefon",
       path: ["patient_id"],
     }
   )

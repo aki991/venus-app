@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Search, User, X } from "lucide-react";
+import { Loader2, Search, Smartphone, User, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { searchPatients, type PatientSearchResult } from "@/lib/db/patients";
@@ -20,10 +20,14 @@ interface PatientSelectorProps {
   onPatientChange: (patient: PatientSearchResult | null) => void;
 
   // walk-in
-  walkInName: string;
+  walkInFirstName: string;
+  walkInLastName: string;
   walkInPhone: string;
-  onWalkInNameChange: (value: string) => void;
+  onWalkInFirstNameChange: (value: string) => void;
+  onWalkInLastNameChange: (value: string) => void;
   onWalkInPhoneChange: (value: string) => void;
+  addToRegistry: boolean;
+  onAddToRegistryChange: (value: boolean) => void;
 
   /** Prikaz već izabranog pacijenta (npr. pri editu / pre-popunjavanju). */
   selectedLabel?: string | null;
@@ -39,10 +43,14 @@ export function PatientSelector({
   onModeChange,
   patientId,
   onPatientChange,
-  walkInName,
+  walkInFirstName,
+  walkInLastName,
   walkInPhone,
-  onWalkInNameChange,
+  onWalkInFirstNameChange,
+  onWalkInLastNameChange,
   onWalkInPhoneChange,
+  addToRegistry,
+  onAddToRegistryChange,
   selectedLabel,
   selectedSublabel,
 }: PatientSelectorProps) {
@@ -182,9 +190,26 @@ export function PatientSelector({
                           "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-venus-surface-2"
                         )}
                       >
-                        <span className="font-medium">{fullName(p)}</span>
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate font-medium">
+                            {fullName(p)}
+                          </span>
+                          {p.card_number && (
+                            <span className="shrink-0 text-xs text-venus-text-dim">
+                              #{p.card_number}
+                            </span>
+                          )}
+                          {/* Diskretna oznaka: pacijent ima mobilni nalog */}
+                          {p.profile_id && (
+                            <Smartphone
+                              size={12}
+                              className="shrink-0 text-venus-text-faint"
+                              aria-label="Ima mobilni nalog"
+                            />
+                          )}
+                        </span>
                         {p.phone && (
-                          <span className="text-xs text-venus-text-dim">
+                          <span className="shrink-0 text-xs text-venus-text-dim">
                             {p.phone}
                           </span>
                         )}
@@ -197,15 +222,26 @@ export function PatientSelector({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="walk-in-name">Ime i prezime</Label>
-            <Input
-              id="walk-in-name"
-              placeholder="npr. Marko Marković"
-              value={walkInName}
-              onChange={(e) => onWalkInNameChange(e.target.value)}
-            />
+        <div className="grid gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="walk-in-first-name">Ime</Label>
+              <Input
+                id="walk-in-first-name"
+                placeholder="npr. Marko"
+                value={walkInFirstName}
+                onChange={(e) => onWalkInFirstNameChange(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="walk-in-last-name">Prezime</Label>
+              <Input
+                id="walk-in-last-name"
+                placeholder="npr. Marković"
+                value={walkInLastName}
+                onChange={(e) => onWalkInLastNameChange(e.target.value)}
+              />
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="walk-in-phone">Telefon</Label>
@@ -216,6 +252,15 @@ export function PatientSelector({
               onChange={(e) => onWalkInPhoneChange(e.target.value)}
             />
           </div>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-venus-text-dim">
+            <input
+              type="checkbox"
+              className="size-4 accent-venus-gold"
+              checked={addToRegistry}
+              onChange={(e) => onAddToRegistryChange(e.target.checked)}
+            />
+            Dodaj u registar pacijenata
+          </label>
         </div>
       )}
     </div>

@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { parseISO, format } from "date-fns";
 import { srLatn } from "date-fns/locale";
-import { AlertTriangle, Loader2, Pencil, Trash2, UserX } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  MessageCircleQuestion,
+  Pencil,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/lib/db/appointments";
-import { appointmentErrorMessage } from "@/lib/db/appointments";
+import { appointmentErrorMessage, resolvePatient } from "@/lib/db/appointments";
+import { convertWalkInToPatientAction } from "@/lib/admin/patient-actions";
 import { useDoctors } from "@/hooks/useDoctors";
 import { useServices } from "@/hooks/useServices";
 import { useChairs } from "@/hooks/useChairs";
@@ -49,22 +58,25 @@ import { addMinutesISO, toISO } from "./NewAppointmentModal";
 
 type AppointmentStatus = AppointmentWithRelations["status"];
 
+// Statusi koje doktor sme ručno da postavi u modalu. "cancelled" je izostavljen
+// namerno — otkazivanje ide kroz poseban tab (upisuje cancelled_at/cancelled_by).
+const MANUAL_STATUSES = [
+  "pending",
+  "confirmed",
+  "completed",
+  "no_show",
+] as const;
+type ManualStatus = (typeof MANUAL_STATUSES)[number];
+
 type Mode = "view" | "edit" | "cancel";
 
 function patientDisplay(appt: AppointmentWithRelations): {
   name: string;
   phone: string | null;
 } {
-  if (appt.patient) {
-    return {
-      name:
-        [appt.patient.first_name, appt.patient.last_name]
-          .filter(Boolean)
-          .join(" ") || "Bez imena",
-      phone: appt.patient.phone,
-    };
-  }
-  return { name: appt.walk_in_name ?? "—", phone: appt.walk_in_phone };
+  // Registar → legacy profil → walk-in (resolvePatient); "—" ako nema nijednog.
+  const r = resolvePatient(appt);
+  return { name: r.name || "—", phone: r.phone };
 }
 
 function StatusBadge({ status }: { status: AppointmentStatus }) {
@@ -189,21 +201,24 @@ function ViewMode({
   const start = parseISO(appointment.starts_at);
   const end = parseISO(appointment.ends_at);
 
-  // "Nije došao" je jedini ručni status (ostali su automatski: novi = potvrđen,
-  // protekli = završen). Toggle: no_show ↔ confirmed.
-  const updateMutation = useUpdateAppointment();
-  const isNoShow = appointment.status === "no_show";
-  // Dugme je aktivno tek kad prođe vreme POČETKA termina (npr. 12:00 → od 12:01).
-  // Računamo "sada" na render; modal se otvara po potrebi pa je dovoljno precizno.
-  const started = Date.now() > start.getTime();
+  // Walk-in (ima ime, nije iz registra) može da se doda u registar pacijenata.
+  const isWalkIn = !!appointment.walk_in_name && !appointment.patient_record_id;
+  const [converting, setConverting] = useState(false);
 
-  async function toggleNoShow() {
+  // Ručna izmena statusa (npr. doktor potvrđuje AI termin: pending → confirmed).
+  // Otkazivanje ide kroz poseban "Otkazivanje" tab (postavlja cancelled_at/by),
+  // pa ga ovde NE nudimo. "completed" je dostupan i ručno (uz automatski prikaz
+  // proteklih potvrđenih kao završenih preko effectiveStatus).
+  const updateMutation = useUpdateAppointment();
+
+  async function changeStatus(next: ManualStatus) {
+    if (next === appointment.status) return;
     try {
       await updateMutation.mutateAsync({
         id: appointment.id,
-        input: { status: isNoShow ? "confirmed" : "no_show" },
+        input: { status: next },
       });
-      toast.success(isNoShow ? "Vraćeno na potvrđen" : "Označeno: nije došao");
+      toast.success(`Status: ${STATUS_CONFIG[next].label}`);
       onClose();
     } catch (err) {
       toast.error(appointmentErrorMessage(err, "Greška pri izmeni statusa"));
@@ -212,27 +227,34 @@ function ViewMode({
 
   return (
     <div>
-      <div className="mb-2 flex justify-end">
-        <Button
-          type="button"
-          variant={isNoShow ? "default" : "outline"}
-          size="sm"
-          onClick={toggleNoShow}
-          disabled={updateMutation.isPending || (!started && !isNoShow)}
-          title={
-            !started && !isNoShow
-              ? "Dostupno tek nakon početka termina"
-              : undefined
-          }
-        >
-          {updateMutation.isPending ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <UserX size={14} />
-          )}
-          {isNoShow ? "Poništi „Nije došao”" : "Nije došao"}
-        </Button>
-      </div>
+      {appointment.awaiting_response && (
+        <div className="mb-3 flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+          <MessageCircleQuestion size={16} className="shrink-0" />
+          Čeka odgovor pacijenta (WhatsApp)
+        </div>
+      )}
+
+      {isWalkIn && (
+        <div className="mb-2 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setConverting(true)}
+          >
+            <UserPlus size={14} />
+            Dodaj u registar
+          </Button>
+        </div>
+      )}
+
+      {isWalkIn && converting && (
+        <ConvertWalkInForm
+          appointment={appointment}
+          onCancel={() => setConverting(false)}
+          onDone={onClose}
+        />
+      )}
 
       <div className="divide-y divide-venus-line">
       <InfoRow label="Ime">{patient.name}</InfoRow>
@@ -247,9 +269,31 @@ function ViewMode({
         {format(start, "HH:mm")} – {format(end, "HH:mm")}
       </InfoRow>
       <InfoRow label="Status">
-        <StatusBadge
-          status={effectiveStatus(appointment.status, appointment.ends_at)}
-        />
+        <div className="flex items-center gap-2">
+          <StatusBadge
+            status={effectiveStatus(appointment.status, appointment.ends_at)}
+          />
+          <Select
+            value={appointment.status}
+            onValueChange={(v) => changeStatus(v as ManualStatus)}
+            disabled={updateMutation.isPending}
+          >
+            <SelectTrigger className="h-8 w-[150px]">
+              {updateMutation.isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <SelectValue placeholder="Promeni status" />
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              {MANUAL_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {STATUS_CONFIG[s].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </InfoRow>
         {appointment.notes && (
           <div className="py-2">
@@ -257,6 +301,96 @@ function ViewMode({
             <p className="text-sm">{appointment.notes}</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Inline forma za konverziju walk-in termina u pacijenta iz registra.
+ * Ime/Prezime se predlažu deljenjem walk_in_name na prvi razmak, editabilno.
+ */
+function ConvertWalkInForm({
+  appointment,
+  onCancel,
+  onDone,
+}: {
+  appointment: AppointmentWithRelations;
+  onCancel: () => void;
+  onDone: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const raw = (appointment.walk_in_name ?? "").trim();
+  const space = raw.indexOf(" ");
+  const [firstName, setFirstName] = useState(
+    space === -1 ? raw : raw.slice(0, space)
+  );
+  const [lastName, setLastName] = useState(
+    space === -1 ? "" : raw.slice(space + 1).trim()
+  );
+  const [phone, setPhone] = useState(appointment.walk_in_phone ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function onSave() {
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error("Unesite ime i prezime");
+      return;
+    }
+    setSaving(true);
+    const res = await convertWalkInToPatientAction(appointment.id, {
+      firstName,
+      lastName,
+      phone: phone.trim() || null,
+    });
+    setSaving(false);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    // Kalendar koristi react-query keš — osveži da termin pokaže pacijenta.
+    queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    toast.success("Pacijent dodat u registar");
+    onDone();
+  }
+
+  return (
+    <div className="mb-3 grid gap-3 rounded-md border border-venus-border bg-venus-surface-2 p-3">
+      <p className="text-sm font-medium">Dodaj pacijenta u registar</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-1.5">
+          <Label>Ime</Label>
+          <Input
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label>Prezime</Label>
+          <Input
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="grid gap-1.5">
+        <Label>Telefon</Label>
+        <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Otkaži
+        </Button>
+        <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+          {saving ? <Loader2 className="animate-spin" /> : <UserPlus size={14} />}
+          Sačuvaj
+        </Button>
       </div>
     </div>
   );

@@ -89,6 +89,30 @@ export const patientEditFormSchema = patientFormSchema.extend({
   card_number: z.string().trim().min(1, "Unesite broj kartona"),
 });
 
+/**
+ * Minimalan unos pacijenta (samo ime/prezime/telefon) — za brzo dodavanje walk-in
+ * pacijenta u registar. Ostala polja prazna; status 'nov', card_number auto.
+ */
+export function minimalPatientInput(
+  firstName: string,
+  lastName: string,
+  phone: string | null
+): PatientFormInput {
+  return {
+    first_name: firstName.trim(),
+    last_name: lastName.trim(),
+    date_of_birth: null,
+    gender: null,
+    phone: phone?.trim() ? phone.trim() : null,
+    email: null,
+    occupation: null,
+    location: null,
+    status: "nov",
+    card_number: null,
+    notes: null,
+  };
+}
+
 /** Prazne stringove pretvara u null za slanje akciji. */
 export function formValuesToInput(v: PatientFormValues): PatientFormInput {
   const n = (s: string) => (s.trim() === "" ? null : s.trim());

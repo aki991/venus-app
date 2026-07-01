@@ -7,7 +7,10 @@ import { Armchair } from "lucide-react";
 import { useKalendarStore } from "@/stores/kalendarStore";
 import { useAppointmentModalStore } from "@/stores/appointmentModalStore";
 import { useChairs } from "@/hooks/useChairs";
-import type { AppointmentWithRelations } from "@/lib/db/appointments";
+import {
+  resolvePatientName,
+  type AppointmentWithRelations,
+} from "@/lib/db/appointments";
 
 const DEFAULT_COLOR = "#e5c45f";
 
@@ -16,17 +19,6 @@ function terminWord(n: number): string {
   const mod10 = n % 10;
   const mod100 = n % 100;
   return mod10 === 1 && mod100 !== 11 ? "termin" : "termina";
-}
-
-function patientName(appt: AppointmentWithRelations): string {
-  if (appt.patient) {
-    return (
-      [appt.patient.first_name, appt.patient.last_name]
-        .filter(Boolean)
-        .join(" ") || "Bez imena"
-    );
-  }
-  return appt.walk_in_name ?? "Walk-in";
 }
 
 export function DailyAgenda({
@@ -94,7 +86,7 @@ export function DailyAgenda({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-venus-text">
-                    {patientName(appt)}
+                    {resolvePatientName(appt) || "Walk-in"}
                   </p>
                   <p className="truncate text-xs text-venus-text-dim">
                     {appt.service?.name ?? "—"}

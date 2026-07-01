@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffAction } from "@/lib/admin/guard";
-import { patientSchema, type PatientFormInput } from "@/lib/validations/patient";
+import {
+  minimalPatientInput,
+  patientSchema,
+  type PatientFormInput,
+} from "@/lib/validations/patient";
 import type { ActionResult } from "@/lib/admin/types";
 
 export type CreatePatientResult =
@@ -85,6 +89,52 @@ export async function createPatientAction(
 
     revalidatePath("/pacijenti");
     return { success: true, patientId: row.id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Greška" };
+  }
+}
+
+export type ConvertWalkInResult =
+  | { success: true; patientId: string }
+  | { error: string };
+
+/**
+ * Konvertuje postojeći walk-in termin u pacijenta iz registra:
+ *   1. kreira pacijenta (minimalan unos: ime/prezime/telefon)
+ *   2. veže termin: patient_record_id = novi pacijent, briše walk_in polja
+ * Posle ovoga termin se razrešava preko registra (resolvePatient), a karton
+ * pacijenta dobija ovaj termin u istoriji (preko patient_record_id).
+ */
+export async function convertWalkInToPatientAction(
+  appointmentId: string,
+  input: { firstName: string; lastName: string; phone: string | null }
+): Promise<ConvertWalkInResult> {
+  try {
+    await requireStaffAction();
+
+    if (!input.firstName.trim() || !input.lastName.trim()) {
+      return { error: "Unesite ime i prezime" };
+    }
+
+    const created = await createPatientAction(
+      minimalPatientInput(input.firstName, input.lastName, input.phone)
+    );
+    if ("error" in created) return { error: created.error };
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        patient_record_id: created.patientId,
+        walk_in_name: null,
+        walk_in_phone: null,
+      })
+      .eq("id", appointmentId);
+    if (error) return { error: error.message };
+
+    revalidatePath("/kalendar");
+    revalidatePath("/pacijenti");
+    return { success: true, patientId: created.patientId };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Greška" };
   }

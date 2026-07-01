@@ -1,29 +1,37 @@
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 
 export interface PatientSearchResult {
-  id: string;
+  id: string; // patients.id (registar)
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
+  card_number: string | null;
+  // profile_id != null → pacijent ima mobilni nalog (profiles). Booking ga
+  // upisuje u appointments.patient_id da mobilna veza nastavi da radi.
+  profile_id: string | null;
 }
 
 export async function searchPatients(
   query: string
 ): Promise<PatientSearchResult[]> {
-  if (query.trim().length < 2) return [];
+  const q = query.trim();
+  if (q.length < 2) return [];
   const supabase = createBrowserClient();
 
+  // Pretraga REGISTRA pacijenata (patients), ne profiles. Kalendar zakazuje za
+  // pacijente iz kartoteke; profile_id se vuče da bismo znali ima li mobilni nalog.
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name, phone")
-    .eq("role", "patient")
+    .from("patients")
+    .select("id, first_name, last_name, phone, card_number, profile_id")
     .or(
-      `first_name.ilike.%${query}%,last_name.ilike.%${query}%,phone.ilike.%${query}%`
+      `first_name.ilike.%${q}%,last_name.ilike.%${q}%,phone.ilike.%${q}%,card_number.ilike.%${q}%`
     )
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true })
     .limit(10);
 
   if (error) throw error;
-  return data ?? [];
+  return (data as unknown as PatientSearchResult[]) ?? [];
 }
 
 // ── Registar pacijenata (patients tabela) — klijentska pretraga ──────────────
